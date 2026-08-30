@@ -224,12 +224,14 @@ document.addEventListener('DOMContentLoaded', function(){
 
 // ===== クラウド同期設定（Apps Script中継版・安全） =====
 var RELAY_URL = 'https://script.google.com/macros/s/AKfycbzviYFvU6ntm5790_J2ofTSgdVzmM8dWXASABzITEH0Bz1c9AzD82fFQuRfdKlAHjH3CQ/exec';
+var RELAY_TOKEN = 'dhwKsTnOcy8Y5cFMgnWg';
 
 async function loadFromCloud(){
   var statusEl = document.getElementById('load-status');
   statusEl.textContent = 'クラウドから受信中...';
   try{
-    var res = await fetch(RELAY_URL, { method: 'GET' });
+    // キャッシュ回避のため毎回異なるURL（タイムスタンプ付き）でリクエストする
+    var res = await fetch(RELAY_URL + '?token=' + encodeURIComponent(RELAY_TOKEN) + '&t=' + Date.now(), { method: 'GET', cache: 'no-store' });
     if(!res.ok) throw new Error('取得失敗');
     var parsed = await res.json();
     var reports = parsed.reports || {};
