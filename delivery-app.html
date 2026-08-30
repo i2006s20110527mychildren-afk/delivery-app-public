@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>配送</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html{overscroll-behavior-y:contain;}
+body{overscroll-behavior-y:contain;min-height:100vh;background:#0a0e16;font-family:'Hiragino Sans','SF Mono',monospace;color:#e8ecf4;display:flex;flex-direction:column;}
+#app{flex:1;display:flex;flex-direction:column;padding-bottom:78px;}
+
+#tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0d1320;border-top:1px solid #1a2438;height:78px;z-index:50;}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;border:none;color:#3a4a6a;font-size:12px;font-family:inherit;letter-spacing:1px;cursor:pointer;}
+.tab-btn .ti{font-size:23px;}
+.tab-btn.active{color:#5ee0ff;}
+
+.page{display:none;padding:16px;}
+.page.active{display:block;}
+
+h1.ptitle{font-size:14px;letter-spacing:5px;color:#3a4a6a;margin-bottom:16px;text-align:center;}
+
+/* ===== 配送先登録ページ（枠1つに A,B,C,D 常時表示） ===== */
+.slot-box{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:14px;margin-bottom:14px;transition:all 0.15s;}
+.slot-box.active{border-color:#5cffb0;box-shadow:0 0 12px rgba(92,255,176,0.15);}
+.slot-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.slot-num{width:36px;height:36px;border-radius:50%;background:#ffd166;color:#ffffff;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;}
+.slot-select-area{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;}
+.slot-title{font-size:14px;color:#ffffff;letter-spacing:1px;flex:1;}
+.slot-check{font-size:13px;color:#3a4a6a;letter-spacing:1px;}
+.slot-box.active .slot-check{color:#5cffb0;}
+.slot-toggle-btn{background:transparent;border:1px solid #2a3a55;color:#ffffff;font-size:13px;font-family:inherit;letter-spacing:1px;border-radius:6px;padding:6px 10px;cursor:pointer;flex-shrink:0;}
+.slot-toggle-btn.open{border-color:#5ee0ff;color:#ffffff;}
+.slot-rows-wrap{display:none;}
+.slot-rows-wrap.open{display:block;}
+.abcd-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.slot-add-more-btn{width:100%;padding:10px;background:transparent;border:1px dashed #2a3a55;color:#ffffff;font-size:14px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;margin-top:4px;}
+.abcd-letter{width:31px;height:31px;border-radius:6px;background:#5ee0ff;color:#ffffff;font-size:16px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.abcd-input{flex:1;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:17px;font-family:inherit;padding:9px 12px;border-radius:8px;outline:none;}
+.abcd-input::placeholder{color:#3a4a6a;}
+.abcd-display{flex:1;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:17px;padding:9px 12px;border-radius:8px;}
+
+/* ===== 配送ランページ ===== */
+#tour-status{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px;margin-bottom:14px;font-size:14px;color:#5a7a9a;text-align:center;}
+#tour-status.active{color:#5cffb0;border-color:#1a4a36;}
+
+#picker-section{margin-bottom:18px;}
+#picker-label{font-size:12px;color:#3a4a6a;letter-spacing:2px;margin-bottom:10px;}
+.letter-pick-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;margin-bottom:6px;}
+.letter-pick-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:#0d1320;border:1px solid #1a2438;border-radius:20px;font-size:16px;color:#e8ecf4;cursor:pointer;transition:all 0.3s;}
+.letter-pick-chip .pc-letter{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:5px;background:#5ee0ff;color:#ffffff;font-weight:bold;font-size:13px;margin-right:2px;}
+.letter-pick-chip:hover{border-color:#5ee0ff;}
+.letter-pick-chip.used{opacity:0.3;pointer-events:none;}
+.letter-pick-chip.flash{background:#5ee0ff;color:#06141f;border-color:#5ee0ff;transform:scale(1.08);}
+.letter-pick-chip.flash .pc-letter{background:#06141f;color:#5ee0ff;}
+#picker-empty{font-size:14px;color:#2a3a55;letter-spacing:1px;}
+
+.wp-card{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:14px;margin-bottom:10px;-webkit-user-select:none;user-select:none;}
+.wp-card.visited{border-color:#1a4a36;}
+.wp-card.current{border-color:#5ee0ff;box-shadow:0 0 12px rgba(94,224,255,0.15);}
+.wp-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.wp-num{width:34px;height:34px;border-radius:50%;background:#ffd166;color:#ffffff;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.wp-card.visited .wp-num{background:#5cffb0;color:#ffffff;}
+.wp-card.current .wp-num{background:#5ee0ff;color:#ffffff;}
+.wp-num.draggable{cursor:grab;}
+.wp-card.drag-over{border-color:#ffd166;background:#1a2010;}
+.wp-card.dragging{border-color:#ff5c5c;opacity:0.6;}
+.wp-card.dragging .wp-num{background:#ff5c5c!important;}
+.wp-name{flex:1;font-size:17px;}
+.wp-name.empty{color:#2a3a55;}
+.wp-name .wp-letter{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:5px;background:#5ee0ff;color:#ffffff;font-weight:bold;margin-right:6px;font-size:14px;}
+.wp-times{display:flex;gap:16px;font-size:13px;color:#ff5c5c;padding-left:36px;flex-wrap:wrap;}
+.wp-times span{color:#e8ecf4;}
+.wp-temp-wrap{color:#ff5c5c;display:flex;align-items:center;gap:4px;}
+.wp-temp-input{width:60px;background:#0d1320;border:1px solid #2a3a55;color:#e8ecf4;font-size:13px;font-family:inherit;padding:2px 6px;border-radius:6px;outline:none;text-align:right;}
+.wp-temp-input::placeholder{color:#3a4a6a;}
+.wp-btn{padding:10px 18px;background:transparent;border:2px solid #2a3a55;color:#5a7a9a;font-size:15px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;flex-shrink:0;}
+.wp-btn.depart{border-color:#5ee0ff;color:#5ee0ff;}
+.wp-btn.arrive{border-color:#5cffb0;color:#5cffb0;}
+.wp-clear{background:transparent;border:none;color:#2a3a55;font-size:18px;cursor:pointer;flex-shrink:0;}
+#btn-tour-reset{width:100%;padding:12px;background:transparent;border:1px dashed #2a3a55;color:#5a7a9a;font-size:14px;font-family:inherit;letter-spacing:2px;border-radius:10px;cursor:pointer;margin-top:6px;}
+
+/* ===== 配送報告書 ===== */
+#report-action-btns{display:flex;gap:8px;margin-bottom:10px;}
+#print-btn{flex:1;padding:12px;background:transparent;border:2px solid #5ee0ff;color:#5ee0ff;font-size:13px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;}
+#send-btn{flex:1;padding:12px;background:transparent;border:2px solid #ffd166;color:#ffd166;font-size:13px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;}
+#copy-report-btn{flex:1;padding:12px;background:transparent;border:1px solid #ffd166;color:#ffd166;font-size:13px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;}
+#monthly-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.monthly-btn{flex:1;min-width:70px;padding:9px 6px;background:transparent;border:1px solid #2a3a55;color:#8aa0c0;font-size:10px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;}
+.monthly-btn.save{border-color:#5cffb0;color:#5cffb0;}
+.monthly-btn.export{border-color:#5ee0ff;color:#5ee0ff;}
+.monthly-btn.load{border-color:#ffd166;color:#ffd166;}
+#monthly-status{font-size:10px;color:#5a7a9a;text-align:center;min-height:14px;margin-bottom:6px;}
+
+/* ===== 集計ページ ===== */
+#save-report-btn{width:100%;padding:13px;background:transparent;border:2px solid #5cffb0;color:#5cffb0;font-size:13px;font-family:inherit;letter-spacing:1px;border-radius:8px;cursor:pointer;margin-bottom:8px;}
+#stats-status{font-size:10px;color:#5a7a9a;text-align:center;min-height:14px;margin-bottom:8px;}
+#stats-summary{display:flex;gap:8px;margin-bottom:16px;}
+.stats-summary-item{flex:1;background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px 8px;text-align:center;}
+.stats-summary-label{display:block;font-size:10px;color:#8aa0c0;letter-spacing:1px;margin-bottom:6px;}
+.stats-summary-val{font-size:19px;color:#5cffb0;font-weight:bold;}
+.stats-month-head{font-size:11px;color:#8aa0c0;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #1a2438;display:flex;justify-content:space-between;}
+.stats-item{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:#101828;border:1px solid #1a2438;border-radius:8px;margin-bottom:6px;cursor:pointer;}
+.stats-item:active,.stats-item:hover{border-color:#5ee0ff;}
+.stats-item-left{display:flex;flex-direction:column;gap:3px;}
+.stats-item-date{font-size:13px;color:#e8ecf4;letter-spacing:1px;}
+.stats-item-route{font-size:11px;color:#5a7a9a;}
+.stats-item-sales{font-size:15px;color:#ffd166;font-weight:bold;}
+#stats-empty{text-align:center;color:#2a3a55;font-size:13px;padding:40px 0;}
+#stats-detail-header{display:flex;gap:8px;margin-bottom:10px;}
+#stats-back-btn{flex:1;background:transparent;border:1px solid #2a3a55;color:#5ee0ff;font-size:11px;font-family:inherit;padding:9px;border-radius:6px;cursor:pointer;letter-spacing:1px;}
+#stats-delete-btn{background:transparent;border:1px solid #ff5c5c;color:#ff5c5c;font-size:11px;font-family:inherit;padding:9px 14px;border-radius:6px;cursor:pointer;letter-spacing:1px;}
+#stats-detail-title{margin-bottom:10px;}
+#stats-detail-title .report-row{margin-bottom:8px;}
+#stats-detail-title .report-row:last-child{margin-bottom:0;}
+#stats-detail-table-wrap{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch;margin-bottom:12px;}
+#stats-detail-table{width:700px;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+#stats-detail-table th{background:#1a2a45;color:#8aa0c0;padding:4px 3px;border:1px solid rgba(255,255,255,0.3);text-align:center;font-weight:600;white-space:nowrap;font-size:11px;}
+#stats-detail-table td{padding:3px 3px;border:1px solid rgba(255,255,255,0.2);color:#e8ecf4;vertical-align:middle;font-size:12px;height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#stats-detail-table tbody tr:nth-child(even){background:#0d1825;}
+#stats-detail-table tbody tr:nth-child(odd){background:#101828;}
+.sd-num{text-align:center;color:#ffd166;font-weight:bold;width:22px;}
+.sd-time{text-align:center;white-space:nowrap;color:#ff5c5c;width:44px;}
+.sd-move{text-align:center;white-space:nowrap;color:#8aa0c0;width:40px;}
+.sd-name{color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sd-sales{text-align:right;color:#5cffb0;width:64px;}
+.sd-memo{color:#e8ecf4;white-space:normal;}
+#stats-detail-memo{background:#101828;border:1px solid #1a2438;border-radius:8px;padding:12px;font-size:11px;color:#8aa0c0;line-height:1.7;white-space:pre-wrap;}
+
+/* 過去データ一覧 */
+#past-data-section{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px;margin-bottom:12px;}
+#past-data-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+#past-data-title{font-size:11px;color:#8aa0c0;letter-spacing:2px;}
+#past-close-btn{background:transparent;border:1px solid #2a3a55;color:#5a7a9a;font-size:10px;font-family:inherit;padding:4px 10px;border-radius:6px;cursor:pointer;}
+.past-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0d1320;border:1px solid #1a2438;border-radius:8px;margin-bottom:6px;cursor:pointer;}
+.past-item:hover{border-color:#5ee0ff;}
+.past-item-date{font-size:13px;color:#e8ecf4;}
+.past-item-route{font-size:11px;color:#5a7a9a;}
+.past-item-arrow{color:#3a4a6a;font-size:14px;}
+
+/* 過去データ詳細 */
+#past-detail-section{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px;margin-bottom:12px;}
+#past-detail-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+#past-back-btn{background:transparent;border:1px solid #2a3a55;color:#5ee0ff;font-size:10px;font-family:inherit;padding:6px 12px;border-radius:6px;cursor:pointer;}
+#past-detail-title{font-size:12px;color:#e8ecf4;}
+#past-detail-table-wrap{overflow-x:auto;}
+#past-detail-table{width:100%;border-collapse:collapse;font-size:11px;}
+#past-detail-table th{background:#1a2a45;color:#8aa0c0;padding:5px 4px;border:1px solid #1a2438;text-align:center;font-size:10px;}
+#past-detail-table td{padding:5px 4px;border:1px solid #1a2438;color:#e8ecf4;font-size:11px;}
+#past-detail-table tbody tr:nth-child(even){background:#0d1825;}
+.past-td-num{text-align:center;color:#ffd166;font-weight:bold;width:28px;}
+.past-td-time{text-align:center;color:#ff5c5c;white-space:nowrap;}
+.past-td-name{color:#fff;}
+#report-header-top{display:flex;align-items:flex-start;gap:10px;}
+#report-header-left{flex:1;display:flex;flex-direction:column;gap:6px;}
+#stamp-section{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+#stamp-boxes{display:flex;gap:4px;}
+.stamp-box{display:flex;flex-direction:column;align-items:center;border:1px solid #3a4a6a;border-radius:4px;overflow:hidden;width:64px;}
+.stamp-label{font-size:9px;color:#8aa0c0;background:#1a2a45;width:100%;text-align:center;padding:2px 0;letter-spacing:1px;}
+.stamp-area{width:64px;height:64px;background:#0d1320;}
+.report-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.report-row:last-child{margin-bottom:0;}
+.rh-label{font-size:10px;color:#8aa0c0;letter-spacing:1px;flex-shrink:0;}
+.rh-val{font-size:12px;color:#fff;flex:1;}
+.rh-input{flex:1;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:12px;font-family:inherit;padding:5px 8px;border-radius:6px;outline:none;min-width:60px;}
+.rh-input::placeholder{color:#3a4a6a;}
+#report-table-wrap{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch;}
+#report-table{width:700px;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+#report-table th{background:#1a2a45;color:#8aa0c0;padding:4px 3px;border:1px solid rgba(255,255,255,0.3);text-align:center;font-weight:600;white-space:nowrap;font-size:11px;}
+#report-table td{padding:3px 3px;border:1px solid rgba(255,255,255,0.2);color:#e8ecf4;vertical-align:middle;font-size:12px;height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#report-table tbody tr:nth-child(even){background:#0d1825;}
+#report-table tbody tr:nth-child(odd){background:#101828;}
+.td-num{text-align:center;color:#ffd166;font-weight:bold;width:22px;}
+.td-time{text-align:center;white-space:nowrap;color:#ff5c5c;width:36px;}
+.td-name{color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-input{width:100%;background:transparent;border:none;color:#e8ecf4;font-size:12px;font-family:inherit;outline:none;text-align:right;}
+.td-input::placeholder{color:#2a3a55;}
+.tfoot-label{color:#8aa0c0;font-size:9px;text-align:right;}
+#report-count{color:#5ee0ff;font-weight:bold;}
+.tfoot-memo{padding:6px 4px!important;}
+.memo-label{font-size:9px;color:#8aa0c0;margin-bottom:4px;}
+#report-memo{width:100%;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:11px;font-family:inherit;padding:6px;border-radius:6px;outline:none;resize:vertical;min-height:50px;}
+#report-memo::placeholder{color:#3a4a6a;}
+#truck-status{border:1px solid #3a4a6a;border-radius:6px;padding:6px 10px;min-width:70px;text-align:center;}
+#truck-status-box{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.truck-opt{font-size:12px;color:#e8ecf4;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;}
+.page-break{border-top:2px dashed #2a3a55;margin:20px 0;text-align:center;font-size:9px;color:#3a4a6a;padding-top:4px;}
+.page-break::before{content:'--- 2枚目 ---';}
+#report-header2{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:10px 12px;margin-bottom:10px;}
+#report-header2-top{display:flex;align-items:flex-start;gap:10px;}
+#report-header2-left{flex:1;display:flex;flex-direction:column;gap:6px;}
+#stamp-section2{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+#stamp-boxes2{display:flex;gap:4px;}
+.report-table2{width:700px;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+#report-table-wrap2{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch;}
+.report-table2 th{background:#1a2a45;color:#8aa0c0;padding:4px 3px;border:1px solid rgba(255,255,255,0.3);text-align:center;font-weight:600;font-size:11px;}
+.report-table2 td{padding:3px 3px;border:1px solid rgba(255,255,255,0.2);color:#e8ecf4;vertical-align:middle;font-size:12px;height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.report-table2 tbody tr:nth-child(even){background:#0d1825;}
+.report-table2 tbody tr:nth-child(odd){background:#101828;}
+#report-memo2{width:100%;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:11px;font-family:inherit;padding:6px;border-radius:6px;outline:none;resize:vertical;min-height:50px;}
+@media print{
+  @page{ size:A4 portrait; margin:8mm; }
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; box-sizing:border-box; }
+  html,body{ background:#fff !important; color:#000 !important; }
+  #tabbar,#page-reg,#page-tour,#page-stats,#report-action-btns,#monthly-btns,#monthly-status,.page-break,#lock-banner,#copy-result-banner,#pwlock{ display:none !important; }
+  #app{ padding-bottom:0 !important; }
+  #page-history{ display:block !important; padding:0 !important; }
+  #report-header{ background:#fff !important; border:1px solid #999 !important; border-radius:0 !important; padding:4px 6px !important; margin-bottom:4px !important; }
+  #report-header-top{ display:flex !important; align-items:flex-start !important; gap:4px !important; }
+  #report-header-left{ flex:1 !important; }
+  .rh-label{ color:#000 !important; font-size:7pt !important; }
+  .rh-val{ color:#000 !important; font-size:8pt !important; }
+  .rh-input{ color:#000 !important; font-size:8pt !important; border:none !important; border-bottom:1px solid #aaa !important; background:#fff !important; padding:1px !important; }
+  .stamp-box{ border:1px solid #000 !important; }
+  .stamp-label{ background:#eee !important; color:#000 !important; font-size:7pt !important; }
+  .stamp-area{ background:#fff !important; width:55px !important; height:55px !important; }
+  #stamp-section{ flex-shrink:0 !important; }
+  #report-table-wrap{ overflow:visible !important; width:100% !important; }
+  #report-table{ width:100% !important; font-size:7pt !important; border-collapse:collapse !important; table-layout:auto !important; }
+  #report-table th{ background:#ddd !important; color:#000 !important; border:1px solid #000 !important; padding:2px 3px !important; font-size:7pt !important; white-space:nowrap !important; }
+  #report-table td{ border:1px solid #000 !important; color:#000 !important; padding:1px 3px !important; font-size:7pt !important; }
+  #report-table tbody tr:nth-child(even){ background:#f5f5f5 !important; }
+  #report-table tbody tr:nth-child(odd){ background:#fff !important; }
+  .td-num,.td-time,.td-name{ color:#000 !important; }
+  .sales-input,.td-input{ color:#000 !important; background:transparent !important; font-size:7pt !important; border:none !important; width:100% !important; padding:0 !important; }
+  input{ color:#000 !important; background:transparent !important; -webkit-appearance:none !important; }
+  input[type='radio']{ -webkit-appearance:radio !important; appearance:radio !important; }
+  .tfoot-label{ color:#000 !important; font-size:7pt !important; }
+  #report-count,#report-total-time,#report-km-total,#report-sales-total{ color:#000 !important; font-weight:bold !important; }
+  .tfoot-memo{ padding:3px !important; }
+  .memo-label{ color:#000 !important; font-size:7pt !important; }
+  #report-memo{ background:#fff !important; border:1px solid #999 !important; color:#000 !important; font-size:7pt !important; min-height:20px !important; width:100% !important; }
+  #truck-status{ border:1px solid #000 !important; padding:3px !important; }
+  #truck-status-box{ display:flex !important; gap:8px !important; }
+  .truck-opt{ color:#000 !important; font-size:7pt !important; display:inline-flex !important; align-items:center !important; gap:3px !important; }
+  #report-km-start,#report-km-end{ color:#000 !important; background:transparent !important; font-size:7pt !important; border:none !important; border-bottom:1px solid #aaa !important; }
+}
+</style>
+</head>
+<body>
+<div id="pwlock" style="position:fixed;inset:0;background:#0d1117;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;">
+  <div style="font-size:18px;margin-bottom:16px;">パスワードを入力</div>
+  <input id="pwinput" type="password" inputmode="numeric" maxlength="10" style="font-size:20px;padding:10px;border-radius:8px;border:none;text-align:center;width:160px;">
+  <button onclick="checkPw()" style="margin-top:16px;padding:10px 24px;border-radius:8px;border:none;background:#f5a623;color:#fff;font-size:16px;">開く</button>
+  <div id="pwerror" style="color:#ff6b6b;margin-top:10px;height:20px;"></div>
+</div>
+<script>
+function checkPw(){
+  var v = document.getElementById('pwinput').value;
+  if(v === '0141'){
+    document.getElementById('pwlock').style.display = 'none';
+    sessionStorage.setItem('unlocked','1');
+  } else {
+    document.getElementById('pwerror').textContent = 'パスワードが違います';
+  }
+}
+if(sessionStorage.getItem('unlocked') === '1'){
+  document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('pwlock').style.display = 'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('pwinput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ checkPw(); }
+  });
+});
+</script>
+<div id="app">
+
+  <!-- 配送先一覧 -->
+  <div class="page active" id="page-reg">
+    <h1 class="ptitle" style="display:none">DELIVERY LIST</h1>
+    <div id="slot-container"></div>
+  </div>
+
+  <!-- 配送欄 -->
+  <div class="page" id="page-tour">
+    <h1 class="ptitle" style="display:none">DELIVERY BOARD</h1>
+    <div id="tour-status"></div>
+
+    <div id="picker-section">
+      <div id="picker-label">「配送先一覧」で選んだエリアの配送先が表示されます（タップで配達順に追加・最大100件）</div>
+      <div id="picker-list"></div>
+    </div>
+
+    <div id="waypoint-list"></div>
+    <button id="btn-tour-reset" onclick="resetTour()">記録をリセット</button>
+  </div>
+
+  <!-- 履歴 -->
+  <div class="page" id="page-history">
+    <h1 class="ptitle">配送報告書</h1>
+    <div id="report-action-btns">
+      <button id="print-btn" onclick="printReport()">🖨 印刷／PDF保存</button>
+      <button id="send-btn" onclick="sendReport()">📤 日報を送信</button>
+    </div>
+    <div id="report-header">
+      <div id="report-header-top">
+        <div id="report-header-left">
+          <div class="report-row">
+            <span class="rh-label">日付</span>
+            <span id="report-date" class="rh-val"></span>
+            <span class="rh-label" style="margin-left:12px;">ルート名</span>
+            <input id="report-route" class="rh-input" placeholder="例：朝ラン">
+            <span class="rh-label" style="margin-left:12px;">車輌No</span>
+            <input id="report-car" class="rh-input" placeholder="車輌No" style="max-width:80px;">
+          </div>
+        </div>
+        <div id="stamp-section">
+          <div id="stamp-boxes">
+            <div class="stamp-box"><div class="stamp-label">本人</div><div class="stamp-area"></div></div>
+            <div class="stamp-box"><div class="stamp-label">部長</div><div class="stamp-area"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="report-table-wrap">
+      <table id="report-table">
+        <colgroup>
+          <col style="width:30px">
+          <col style="width:52px">
+          <col style="width:52px">
+          <col style="width:44px">
+          <col style="width:44px">
+          <col style="width:52px">
+          <col style="width:90px">
+          <col style="width:50px">
+          <col style="width:70px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>番号</th>
+            <th>到着</th>
+            <th>出発</th>
+            <th>移動</th>
+            <th>納品</th>
+            <th>庫内温度</th>
+            <th>店名</th>
+            <th>売上</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="report-tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" class="tfoot-label">売上合計</td>
+            <td colspan="6" style="color:#5cffb0;font-weight:bold;"><span id="report-sales-total">0</span> 円</td>
+          </tr>
+          <tr>
+            <td colspan="2" class="tfoot-label">配送件数</td>
+            <td><span id="report-count">0</span> 件</td>
+            <td colspan="2" class="tfoot-label">配送所要時間</td>
+            <td colspan="3"><span id="report-total-time">--</span></td>
+          </tr>
+          <tr>
+            <td class="tfoot-label" colspan="2">走行距離</td>
+            <td colspan="2"><input id="report-km-start" class="td-input" placeholder="始" type="number" oninput="calcKm()" style="color:#e8ecf4;"> km</td>
+            <td><input id="report-km-end" class="td-input" placeholder="終" type="number" oninput="calcKm()" style="color:#e8ecf4;"> km</td>
+            <td colspan="3">計 <span id="report-km-total" style="color:#5ee0ff;font-weight:bold;">--</span> km</td>
+          </tr>
+          <tr>
+            <td colspan="8" class="tfoot-memo">
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <div style="flex:1;">
+                  <div class="memo-label">本日の顧客情報・報告内容</div>
+                  <textarea id="report-memo" placeholder="お客様からの要望・欠品・遅刻・商品規格のズレ等"></textarea>
+                </div>
+                <div id="truck-status">
+                  <div class="memo-label" style="text-align:center;">台車の状態</div>
+                  <div id="truck-status-box">
+                    <label class="truck-opt"><input type="radio" name="truck" value="good"> 良</label>
+                    <label class="truck-opt"><input type="radio" name="truck" value="bad"> 不良</label>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- 2ページ目（36件以上の場合に表示） -->
+    <div id="report-page2" style="display:none;">
+      <div class="page-break"></div>
+      <!-- 2枚目ヘッダー（1枚目と同じ書式） -->
+      <div id="report-header2">
+        <div id="report-header2-top">
+          <div id="report-header2-left">
+            <div class="report-row">
+              <span class="rh-label">日付</span>
+              <span id="report-date2" class="rh-val"></span>
+              <span class="rh-label" style="margin-left:12px;">ルート名</span>
+              <span id="report-route2" class="rh-val"></span>
+              <span class="rh-label" style="color:#5a7a9a;margin-left:4px;">（2枚目）</span>
+              <span class="rh-label" style="margin-left:12px;">車輌No</span>
+              <span id="report-car2" class="rh-val"></span>
+            </div>
+          </div>
+          <div id="stamp-section2">
+            <div id="stamp-boxes2">
+              <div class="stamp-box"><div class="stamp-label">本人</div><div class="stamp-area"></div></div>
+              <div class="stamp-box"><div class="stamp-label">部長</div><div class="stamp-area"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="report-table-wrap2">
+        <table id="report-table2" class="report-table2">
+          <colgroup>
+            <col style="width:20px"><col style="width:36px"><col style="width:36px">
+            <col style="width:32px"><col style="width:32px"><col style="width:auto">
+            <col style="width:38px"><col style="width:44px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>番号</th><th>到着</th><th>出発</th><th>移動</th><th>納品</th><th>店名</th><th>売上</th><th>備考</th>
+            </tr>
+          </thead>
+          <tbody id="report-tbody2"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8" class="tfoot-memo">
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                  <div style="flex:1;">
+                    <div class="memo-label">本日の顧客情報・報告内容（続き）</div>
+                    <textarea id="report-memo2" placeholder="続きの報告内容等"></textarea>
+                  </div>
+                  <div class="truck-opt2">
+                    <div class="memo-label" style="text-align:center;">台車の状態</div>
+                    <div id="truck-status-box2">
+                      <label class="truck-opt"><input type="radio" name="truck2" value="good"> 良</label>
+                      <label class="truck-opt"><input type="radio" name="truck2" value="bad"> 不良</label>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div id="hist-empty" style="display:none;text-align:center;color:#2a3a55;font-size:13px;padding:40px 0;">配送記録がありません</div>
+  </div>
+
+  <!-- 集計 -->
+  <div class="page" id="page-stats">
+    <h1 class="ptitle">配送実績集計</h1>
+    <button id="save-report-btn" onclick="saveTodayReport()">💾 上書き保存（今すぐ集計に反映）</button>
+    <div id="stats-status"></div>
+    <div style="font-size:9px;color:#3a4a6a;text-align:center;margin:-4px 0 10px;">※報告書の入力は自動で集計に保存されます</div>
+
+    <div id="stats-summary">
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">今月の合計売上</span>
+        <span id="stats-month-total" class="stats-summary-val">0</span>円
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">記録日数</span>
+        <span id="stats-month-days" class="stats-summary-val">0</span>日
+      </div>
+    </div>
+
+    <div id="stats-list"></div>
+    <div id="stats-empty" style="display:none;text-align:center;color:#2a3a55;font-size:13px;padding:40px 0;">保存された記録がまだありません</div>
+
+    <div id="stats-detail" style="display:none;">
+      <div id="stats-detail-header">
+        <button id="stats-back-btn" onclick="closeStatsDetail()">← 一覧へ戻る</button>
+        <button id="stats-delete-btn" onclick="deleteStatsRecord()">🗑 削除</button>
+      </div>
+      <div id="stats-detail-title"></div>
+      <div id="stats-detail-table-wrap">
+        <table id="stats-detail-table">
+          <thead><tr><th>番号</th><th>到着</th><th>出発</th><th>移動</th><th>納品</th><th>庫内温度</th><th>店名</th><th>売上</th><th>備考</th></tr></thead>
+          <tbody id="stats-detail-tbody"></tbody>
+        </table>
+      </div>
+      <div id="stats-detail-memo"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="tabbar">
+  <button class="tab-btn active" data-p="reg" onclick="switchTab('reg')"><span class="ti">📦</span>配送先一覧</button>
+  <button class="tab-btn" data-p="tour" onclick="switchTab('tour')"><span class="ti">🚚</span>配送欄</button>
+  <button class="tab-btn" data-p="history" onclick="switchTab('history')"><span class="ti">📋</span>報告書</button>
+  <button class="tab-btn" data-p="stats" onclick="switchTab('stats')"><span class="ti">📅</span>集計</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ===== タブ切替 =====
+function switchTab(p){
+  // タブ切替前に売上データを保存
+  saveReportInputs();
+  // 報告書タブから離れる際は自動保存を即座に確定（デバウンス待ちしない）
+  var wasHistory = document.getElementById('page-history').classList.contains('active');
+  if(wasHistory && p!=='history'){
+    if(autoSaveReportTimer){ clearTimeout(autoSaveReportTimer); autoSaveReportTimer=null; }
+    saveTodayReport(true);
+  }
+
+  ['reg','tour','history','stats'].forEach(function(id){
+    document.getElementById('page-'+id).classList.toggle('active', id===p);
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.p===p);
+  });
+  if(p==='reg') renderSlots();
+  if(p==='tour'){ renderPicker(); renderWaypoints(); }
+  if(p==='history'){
+    saveReportInputs();
+    renderHistory();
+    setTimeout(function(){
+      loadReportInputs();
+      checkReportLock();
+    }, 150);
+  }
+  if(p==='stats'){ renderStatsList(); }
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== 配送先登録：1枠＝A,B,C,D の4箇所をまとめて入力（あらかじめ登録） =====
+var slots = [
+  {label:'朝', names:['会社出発','Kim\'s Deli','サンガム','福ベーグル','福ベーグル工房','バンビーナ中居','ウーノイタリアーノ','シャンゴ 倉賀野','ココシエール','そうじゃ屋','金光','一鮮','シャトー','東横イン ⅠⅡ','オリオン餃子','ABCオーパ','高崎じまん','サブリナ','RTD','サンジェルマン','TGHカフェ','神楽','バイマイ','セントラルレディース','しま田','カーロ高島屋','休憩','我が豚は天地とひとつ','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'午後', names:['会社出発','あかり','ほでり','安べゑ','豊丸水産 高崎','葵屋','あし火','はっかい串','半兵衛','かわばんち','和出し弁当水香苑','ウマ◯','鳥放題','がブリチキン','はましょく','高崎酒多','福龍 通町店','高崎屋','丸川商店','くら田','BO-Z','さんたろう','ケバブカフェノールズ','ピッチ','パーフェクトビアキッチン','のぼる','ROSSA','カーロ高崎本店','バルレオン','モア 高崎','えびす堂','しま田 高崎','ジンギスカン いし田','kobu','トラットリア ウメ','かがり火','おでん トト炉','一福','美食酒場 NO19','うどん食堂 たみとし','鶏匠','ルチアーノ','5番館','オイスターハウス','八兵衛','アーバンホテル','アラマチサカス','ラパン','KATS','ジンギスカン オセロ ビアガーデン','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'高1', names:['会社出発','高崎芸術劇場シアターカフェ&レストラン','NEXUS moment 倉賀野','レストラン パリエ','ホテル ニューボート','ホテル メトロポリタン高崎 ローリエ','リストランテ シムラ','Bed ford Market','ボンクラージュ（旧シェタカ）','エテルナ高崎','NEXUS moment 高崎','高崎ワシントンホテルプラザ','グローバルウェディング ディアーデ','SANNY KITCHEN（メモリード）','鉄亭 高崎店','ラウライタリコ','高崎モノリス','湯都里','エテルナ高崎 婚礼部','エテルナ高崎 3F','はちきゅう 89','ティアーデ','TGH','エテルナ高崎事務所','REDROOM-rooftop&grill','REDROOM-rooftop&grill ホール 4F','レッドルームカフェ','住宅型有料老人ホーム あかし','ベイコック問屋町','キラリ','りんでんぱーむ','エテルナ高崎','杉原様','水香苑','高崎モントレー','ウエハライタリコ','Laithai','イタリアンDue','ジョジアンボウス1997（高崎）','空気回廊 四ツ居','レストランいしだ','はるカレー','鈴草 Grace','ボンジョルノ スズラン高崎店','やきめし屋 稲竹','パティスリー プチ・ポワール','COJIRO','ルアーナ','レストラン エスト','エルフリオ 大手前','リンレン','小紋','ルカランドウクール','ボンジョルノ チャオベリフェリエ','養麦処ぷんぷく高崎東口','アルカーサル迎賓館','あかり','ほでり','安べゑ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','']},
+  {label:'高2', names:['会社出発','手作り菓子 Torte','鳴神食堂','ホテル ターザン','ホテル カリヴィアン','ホテル アジアン','GGCキッチン','G・G・C 高崎本店','ABA高崎店 (株)膝生','EQUILIBRE','SALLY TABLE','高崎はた山','和蘭ししかむら','大黒屋','ウェディングレストラン ジュレ','雨云','シャンゴ 問屋町本店','The Secret Home','彩食酒笑1555','おぼろ家','D-COURT Kitchen','料亭 暢神荘','ハンバーグ工房（GGCセントラル）','炭火鳥','素敵亭','ホテルグランビュー スワン','美熊野シン和食','鉄板ステーキ美熊野','鉄板焼 龍見 泰正','和食kashigi かしぎ','マンマペラッチェ(いしもとレディースクリニック)','茶房 gleam','クッチーナ チーニョ','パン工房樫','バンビーナ 筑縄','アチェロ','CoCo壱番屋 筑縄店','鉄板酒場エイト','バンビーナ セントラル','ボンジョルノ本店','おかむ','イタリア食堂 ガンベロッソ','プラリネ 高崎小鳥店','pe=anro イノイ アシロー','パニーズ カフェ','株式会社もぎたて完熟屋','シャンゴ 問屋町支店','AQUA TABLE','PAN DA SAN','(株)リアン Lien','FAT DAY','サマタこめ販売','K deli factory','ボウール高崎','高崎食品','いなほ','Cobako','ビストロ レガル','BARON','福籠 飯塚店','風の都','ほたる食堂＆スナック','中華ダイニング 好','休憩','その他店舗','会社帰宅','','','','','','','','','','','','']},
+  {label:'高北', names:['会社出発','(株)オルビス ロービー','(株)オルビス 群馬工場','SHOP Takasaki Horumon','天神の湯','ケアホーム「家族の家」浜川','コニファー いわびつ','ローストビーフ丼 やまと','FDKトワイセル高崎','紅虎菜舗 イオンモール高崎','一汁五穀 高崎店','博多弁天堂','和 cafe 麦','ガットビアンコ','(株)アセットホールディングス（レーサムゴルフ AL）','ギオットーネ','(株)アセットホールディングス（レーサムゴルフCH 売店）','NEXUSレジャー事業部 安中店','(株)アセットホールディングス（レーサムゴルフCH ホール）','(株)アセットホールディングス（レーサムゴルフCH カフェ）','NEXUS moment 安中店','梅の郷ゴルフ倶楽部','ホテル イエスタデイ','プラリネ菅谷店','丸駒製麺','パティスリー トワ','Nano','カレー風味すずき','プティ シャンブル','Luonto','東京餃子軒','dmキッチン グリーン牧場','アニマルガーデン コネクト','Patisserie CoCo','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'前1', names:['会社出発','富金豚','ごま屋','(株)藤生 ABCクッキングスタジオけやき','紅トラ','そらの森珈琲 古市店','サザンメイドカフェ 前橋店','群馬中央病院','ニューデリー','Bistro欅','ikoi','RK by lalu（ラル）','ラーメン二郎','GRASSA','PIZZERIA ペスカ まちなか店','松し満','まる兵ラーメン','ルパン','YAMATOYA COFFEE32','群馬県庁生活協同組合','スワン ヴォレ・シーニュ','Café Le Cocon','スワン 朔詩舎','エメ ポテト','らーめん戸丸屋','BAR AND GRILL CENTO','赤から 前橋下小出店','コンプレアンノ','鮨いちもん 前橋店','CHELSEA','福ベーグル','おおしまや','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'前2', names:['会社出発','そば蔵','Cafe & Bar Wish','カリーマハール','幸ちゃん もつ鍋本舗 前橋本店','ザ リーグスプレミアムテラス','G．G．C前橋小相木店','いんこう家','幸ちゃん 前橋店','Restaurant Doi','アメイジンググレイス','NEXUS 勝とき食堂前橋南店','NEXUS 勝とき食堂ガーデン前橋店','マザーズクリニックTAMURA','前橋ロイヤルホテル','よろずや寒春','てん幻','新木珈琲店 広瀬店','コンフォートホテル前橋','焼肉 たくみ','ドーマイン前橋','七福の湯 前橋店','東京インテリアMOAカフェ','トラットリアバンビーナ前橋南店','前橋赤十字病院職員食堂','あがたコト前橋大島駅前キッチンカー店','群馬県立心臓血管センター 院長','faro blannco cafe','アルフアルフア広瀬','アルフアルフア天川','シャンゴ 前橋南店','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'前3', names:['会社出発','覚瑛','スワン マックススクエアー','スワン リストラテ チイニョ','鮨いちもん 高崎新保店','とり弁鶏 前橋川曲店','hanadan cafe','スワン 雪月夢','スワン サンプラザ','セレンディップ','椿 家 TUBAKI-YA 本店','高崎グリーンポイント','ボンジョルノ 新クッチーナ店','(株)ツドイエ（ホテルラシーネ）和食','シャンゴ 前橋石倉店','鮨ダイニング 青木','ファミリー太閣（ミートディッシュ）','逢とり縁','(株)ビューサービス ロイヤルチェスター前橋','ケータリング事業部 くろまつキッチン','KUROMATSU','日高病院','レストラン日高','駒井病院 患者','群大 プランタン','NEXUS 勝とき食堂金古店','そらの森珈琲','ボンジョルノ ラヴォーチェ店','ステーキ 真樹','(株)ツドイエ（ホテルラシーネ）洋食','モダンゴルフ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'伊勢崎', names:['会社出発','座忘','プリオホールディングス(株)伊勢崎店 キッチン','ピザーラ 伊勢崎店','一心太助 連取店','Prelibato いち笑','Bedford CAFE','キャメルダイニング','luce cafe','かれえ工房','CAFE & DINNING JYO JYO camino','大衆ビストロ PA9PA9','BISTOR えぼるちょ','NEXUS 勝とき食堂伊勢崎店','スーパー銭湯 伊勢崎店（湯楽の里）','シャンゴ 伊勢崎店','シャンゴ DUE伊勢崎店','和ダイニング 一入 伊勢崎店','しのや','竜園','ナポリの食卓 伊勢崎店','とり弁鶏 伊勢崎連取店','鮨いちもん 伊勢崎本店','天然温泉 伊勢崎ゆまーる','あずまライフライン','(有)フォーフィールズ 八雲八〜雲のプリン','群馬いちもん 金沢まいもん スマーク店','ハウス・ダ・カリー','山崎パン(株)伊勢崎工場','焼き一生','つる屋','神戸クックワールド','ル・レーヴ','SOLIS','波のあや','B & Bee','パスタバル リッコ','スマイル スマイル','ローザ ロッサ','ES(株) Tratoria FILO（フィーロ）','肉酒場 ロメオ','べじたぶるKitchen イロドリ','Fun\'s Dining WOK','イタリアン料理 ラ・ボッテガ・T','サザンメイドドーナツ 伊勢崎店','喜心ダイニング','とんかつ勇吾郎','焼肉とら','アパホテル伊勢崎','めん六','Wai Yoi','ダイニング まりん亭','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'太田、桐生', names:['会社出発','肉の爽','JYO JYO 太田','ガーメント','ショコラ ノア','(株)音羽倶楽部','トラットリア ソラティオ イタリアーノ','れすとらん ぱるか','イタリアンレストラン プリマベーラ','NEXUS 勝とき食堂大間々店','NEXUS 勝とき食堂太田店','NEXUS moment 太田矢島店','NEXUS moment 館林店','ROYAL CHESTER OTA','Royal Chester Ota (宴会)','犇亭（ひしめき亭）太田店','酔い夜 あらたえ','カバーニュ 山の水','ナポリの食卓 太田店','とり弁鶏 太田店','豊丸水産 桐生北口店','ボーノボーノ DINING CAFE 桐生境野店','ナポリの食卓 相生店','ナポリの食卓 足利店','若宿クリニック','パーベイヤーズ Perk Purveyors','G.G.C前橋駒形店','THE SALLY GARDEN','ロッジ','ビビン亭','イムス太田中央病院','こもりぬ（館林サイクリング）','なっぱ畑','ココ・ファーム・カフェ','YOU NOTE バジル注意','なる花','プレイアス太田','東横イン 足利','明養軒','(株)美龍庭','群馬クレインサンダース','群馬クレインサンダース フロント','P＆Eフーズ 邑楽店','アパホテル太田駅北','NEXUS サンキューキッチン羽生','グリーンパレス','城山カントリー倶楽部','牛ときどき豚','たかのす診療所','めん六や 足利店','めん六や 佐野店','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'熊谷', names:['会社出発','cocofuwat','ハッピーバーグ 倉賀野','N & H','グラート','りんでんばーむ藤岡','欧州食堂 BANDEMURE','希望食品','うどん こころ','シントミ 藤岡','CARO藤岡','サルサーレ','上武カントリー','かんなの湯','かんなの湯グランピング','無添加 ラーメンドラサン','シントミ本庄','埼玉グラウンド 本庄','五州園','菓子工場うらら','GardenMere本庄早稲田','オリンピックカントリー','美里ゴルフ','美里ロイヤル','勝どき食堂 花園','ビストロ ひがき','株式会社 LIKE T,Z','埼玉グランド 深谷','LAVIS VILLA SUITE','ナポレ食堂 深谷','ホルモン しま田 深谷','炭火酒処いろどり','酔拳','吉左右','禅や','PUBLIC CULTURE','URBAN EARTH','モーメント 鴻巣','PUBLIC DINER','福ベーグル 熊谷','モーメント 熊谷','ウエマツ','勝どき食堂 上里','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'安中・富岡', names:['会社出発','矢中家','矢中食堂','吉井カントリークラブ','Pizzeria deco','古民家カフェくいな','baimai 富岡店','パスタバル ミルティーロ','グランクラッセ','群馬サファリパーク','富岡倶楽部','峠の茶屋','いっちゃん','ビストロ ユジェーヌ','バーガー ルアーナ','シャンゴ 倉賀野','Kim\'s デリ','Uno イタリアーノ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'伊香保', names:['会社出発','(株)出雲','榛名湖温泉ゆうすげ元湯','伊香保グリーン牧場 32363','大江戸温泉物語(株) 伊香保','レストラン ランデブー','リタプラン（ブランカフェ）','ローランドゴルフ 社食','ローランドゴルフ レストラン','横手館','(株)ホテル 松本楼','伊香保カントリークラブ','NEXUS moment 沼田店','NEXUS moment 渋川インター店','NEXUS moment 中之条店','焼肉やまと','丹次亭','P&Eフーズ 前橋店','焼肉 よねやま','ナポリの食卓 高崎店','はなの舞 相馬原駐屯地店','NEXUSレジャー事業部 沼田店','ちる家 彌鳥不°','おおぎやラーメン 沼田インター店','おおぎやラーメン 沼田店','おおぎやラーメン 子持店','おおぎやラーメン 吾妻原町店','パルメナーラ','あがた吾妻原町本店','福州亭','カフェ タール','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'軽井沢', names:['会社出発','四季倶楽部 アイソネット草津','相の湯温泉ふれあい館','中沢ヴィレッジ','草津ホテル株式会社','望雲','ホテルグリーンプラザ軽井沢（プレジデント）','ホテル軽井沢1130（サンライズ）','(有)大地 薬師温泉 旅籠','焼肉オオギヤ','ANA','草津温泉スキー場','プレジデントリゾート軽井沢 スノーパーク','ヴィラ北軽井沢エルウイング','永田屋','GGC草津温泉専門店','太平洋クラブ','やまと屋 八ッ場本店','亀の井ホテル 汚水畑','CAFÉ ASPEN','ジンギスカン','草津運動茶屋公園道の駅','HANAYADO BAELZ','nanakusa','浅間酒造観光センター','さいたま屋','カフェレストラン ソニアン','洋麺亭','うどん 園','TIGRE草津温泉','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'水上', names:['会社出発','ナポリの食卓 高崎店','P & E フーズ','スリービルボード','よねやま','チルコリーノ','おおぎやラーメン 子持店','おおぎやラーメン沼田店','たま農園','おおぎやラーメン沼田インター店','悠湯里庵','D\'ステ沼田','松乃井','ユートピア','ポポラーレ','福州亭','D\'ステ渋川','スカイテルメ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+];
+var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(function(c){ return 'A'+c; })
+).concat(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(function(c){ return 'B'+c; })
+);
+
+function updateSlotName(slotIdx, letterIdx, val){
+  slots[slotIdx].names[letterIdx] = val;
+}
+
+var activeSlots = []; // 配送先一覧でタップして選択された枠のインデックス
+var openSlots = []; // ABCDの表示/非表示状態
+
+function toggleSlotActive(si){
+  var idx = activeSlots.indexOf(si);
+  if(idx >= 0) activeSlots.splice(idx,1);
+  else activeSlots.push(si);
+  renderSlots();
+  // 選択中の枠ラベルをルート名に自動反映
+  var routeInput = document.getElementById('report-route');
+  if(routeInput){
+    var labels = activeSlots.map(function(i){ return slots[i].label; });
+    routeInput.value = labels.join('・');
+  }
+  saveState();
+}
+
+function toggleSlotOpen(si, event){
+  event.stopPropagation();
+  var idx = openSlots.indexOf(si);
+  if(idx >= 0) openSlots.splice(idx,1);
+  else openSlots.push(si);
+  renderSlots();
+}
+
+var expandedAddSlots = []; // 「枠を追加する」を押して全件表示にした枠
+
+function renderSlots(){
+  var el = document.getElementById('slot-container');
+  el.innerHTML = slots.map(function(slot, si){
+    var isActive = activeSlots.indexOf(si) >= 0;
+    var isOpen = openSlots.indexOf(si) >= 0;
+    var isFullyExpanded = expandedAddSlots.indexOf(si) >= 0;
+
+    // 最後に名前が入っているレターのインデックスを探す
+    var lastFilledIdx = -1;
+    slot.names.forEach(function(n, i){ if(n && n.trim()!=='') lastFilledIdx = i; });
+
+    var showCount = isFullyExpanded ? LETTERS.length : Math.min(LETTERS.length, lastFilledIdx + 2);
+    var rows = LETTERS.slice(0, showCount).map(function(letter, li){
+      var name = slot.names[li] || '';
+      return '<div class="abcd-row">'+
+        '<div class="abcd-letter">'+letter+'</div>'+
+        '<div class="abcd-display">'+escHtml(name)+'</div>'+
+        '</div>';
+    }).join('');
+
+    var addBtn = (!isFullyExpanded && showCount < LETTERS.length)
+      ? '<button class="slot-add-more-btn" onclick="expandAddSlot('+si+', event)">＋ 枠を追加する</button>'
+      : '';
+
+    return '<div class="slot-box'+(isActive?' active':'')+'">'+
+      '<div class="slot-head">'+
+        '<div class="slot-select-area" onclick="toggleSlotActive('+si+')">'+
+          '<div class="slot-num">'+(si+1)+'</div>'+
+          '<div class="slot-title">'+slot.label+'</div>'+
+          '<div class="slot-check">'+(isActive?'✓ 選択中':'タップして選択')+'</div>'+
+        '</div>'+
+        '<button class="slot-toggle-btn'+(isOpen?' open':'')+'" onclick="toggleSlotOpen('+si+', event)">'+(isOpen?'閉じる':'内容を見る')+'</button>'+
+      '</div>'+
+      '<div class="slot-rows-wrap'+(isOpen?' open':'')+'">'+rows+addBtn+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function expandAddSlot(si, event){
+  event.stopPropagation();
+  if(expandedAddSlots.indexOf(si) === -1) expandedAddSlots.push(si);
+  renderSlots();
+}
+
+// ===== 配送ラン：登録済みの配送先を個別にタップして選択 =====
+var MAX_WAYPOINTS = 100;
+function makeEmptyWaypoints(){
+  var arr = [];
+  for(var i=0;i<MAX_WAYPOINTS;i++) arr.push({key:null, depart:null, arrive:null});
+  return arr;
+}
+var waypoints = makeEmptyWaypoints();
+
+function getNameByKey(key){
+  if(!key) return null;
+  var parts = key.split('-');
+  var slotIdx = parseInt(parts[0]);
+  var letter = parts[1];
+  var letterIdx = LETTERS.indexOf(letter);
+  var name = slots[slotIdx].names[letterIdx];
+  return name && name.trim() !== '' ? name.trim() : null;
+}
+
+function renderPicker(){
+  var el = document.getElementById('picker-list');
+  if(activeSlots.length === 0){
+    el.innerHTML = '<div id="picker-empty">先に「配送先一覧」タブでエリアをタップして選択してください</div>';
+    document.getElementById('picker-section').style.display = 'block';
+    return;
+  }
+  var nextSlot = waypoints.findIndex(function(w){ return w.key===null; });
+
+  var html = '';
+  activeSlots.forEach(function(si){
+    var slot = slots[si];
+    var chips = LETTERS.map(function(letter, li){
+      var name = slot.names[li];
+      if(!name || name.trim()==='') return '';
+      var key = si+'-'+letter;
+      return '<span class="letter-pick-chip" onclick="pickItem(\''+key+'\')">'+
+        '<span class="pc-letter">'+letter+'</span>'+escHtml(name.trim())+'</span>';
+    }).join('');
+    html += '<div class="letter-pick-row">'+chips+'</div>';
+  });
+
+  el.innerHTML = html;
+  document.getElementById('picker-section').style.display = (nextSlot === -1) ? 'none' : 'block';
+}
+
+// ===== 通知許可リクエスト =====
+function requestNotifyPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function sendNotify(title, body){
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification(title, {body: body, icon: '🚚'});
+  }
+}
+
+function flashChip(el){
+  if(!el) return;
+  el.classList.add('flash');
+  setTimeout(function(){ el.classList.remove('flash'); }, 1000);
+}
+
+function pickItem(key){
+  var nextSlot = waypoints.findIndex(function(w){ return w.key===null; });
+  if(nextSlot === -1){ alert('配送先は最大'+MAX_WAYPOINTS+'件までです'); return; }
+  waypoints[nextSlot].key = key;
+  saveState();
+
+  // タップしたチップを1秒光らせる
+  var chips = document.querySelectorAll('.letter-pick-chip');
+  chips.forEach(function(chip){
+    if(chip.textContent.replace(/\s/g,'').indexOf((getNameByKey(key)||'').replace(/\s/g,'')) >= 0){
+      flashChip(chip);
+    }
+  });
+
+  var name = getNameByKey(key) || '';
+  sendNotify('配送先を追加', (nextSlot+1)+'番目：'+name);
+
+  renderPicker();
+  renderWaypoints();
+}
+
+function clearWaypointSlot(i){
+  waypoints[i] = {key:null, depart:null, arrive:null};
+  renderPicker();
+  renderWaypoints();
+  saveState();
+}
+
+function fmtTime(ts){
+  if(!ts) return '--:--';
+  var d = new Date(ts);
+  return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function fmtDuration(start, end){
+  if(!start || !end) return '--';
+  var min = Math.round((end-start)/60000);
+  var h = Math.floor(min/60), m = min%60;
+  return h>0 ? h+'時間'+m+'分' : m+'分';
+}
+
+function renderWaypoints(){
+  var el = document.getElementById('waypoint-list');
+  var setCount = waypoints.filter(function(w){return w.key!==null;}).length;
+  var showCount = Math.min(MAX_WAYPOINTS, setCount + 1); // 設定済み＋次の1枠だけ表示
+  var visibleWaypoints = waypoints.slice(0, Math.max(showCount, 1));
+
+  el.innerHTML = visibleWaypoints.map(function(w,i){
+    var name = getNameByKey(w.key);
+    var hasItem = !!name;
+    var letter = w.key ? w.key.split('-')[1] : null;
+    var isFinal = name === '会社帰宅';
+    var isDepart = name === '会社出発';
+    // 前の「設定済み」地点を探して完了チェック（未設定は飛ばす）
+    var prevDone = true;
+    if(i > 0){
+      var prevSet = null;
+      for(var pi = i-1; pi >= 0; pi--){
+        if(waypoints[pi].key !== null){ prevSet = waypoints[pi]; break; }
+      }
+      if(prevSet){
+        prevDone = getNameByKey(prevSet.key)==='会社帰宅' ? !!prevSet.arrive : !!prevSet.depart;
+      }
+    }
+
+    var stateClass = isDepart
+      ? (w.depart ? 'visited' : '')
+      : isFinal
+        ? (w.arrive ? 'visited' : '')
+        : (w.depart ? 'visited' : (w.arrive ? 'current' : ''));
+
+    var actionBtn = '';
+    if(isDepart && hasItem && !w.depart && prevDone){
+      actionBtn = '<button class="wp-btn depart" onclick="markDepart('+i+')">🚚 出発</button>';
+    } else if(isFinal && hasItem && !w.arrive && prevDone){
+      actionBtn = '<button class="wp-btn arrive" onclick="markArrive('+i+')">🏁 到着</button>';
+    } else if(!isFinal && !isDepart && i>0 && hasItem && !w.arrive && prevDone){
+      actionBtn = '<button class="wp-btn arrive" onclick="markArrive('+i+')">🏁 到着</button>';
+    } else if(!isFinal && !isDepart && i>0 && hasItem && w.arrive && !w.depart){
+      actionBtn = '<button class="wp-btn depart" onclick="markDepart('+i+')">🚚 出発</button>';
+    }
+    var clearBtn = hasItem && !w.arrive && !(isDepart && w.depart) ? '<button class="wp-clear" onclick="clearWaypointSlot('+i+')">×</button>' : '';
+
+    var nameHtml = hasItem
+      ? '<span class="wp-letter">'+letter+'</span>'+escHtml(name)
+      : '未設定（上のリストから選択）';
+
+    var canDrag = !w.arrive && !w.depart;
+    return '<div class="wp-card '+stateClass+'" data-idx="'+i+'">'+
+      '<div class="wp-top">'+
+        '<div class="wp-num'+(canDrag?' draggable':'')+'">'+(i+1)+'</div>'+
+        '<div class="wp-name'+(hasItem?'':' empty')+'">'+nameHtml+'</div>'+
+        actionBtn+clearBtn+
+      '</div>'+
+      (hasItem ? '<div class="wp-times">'+
+        (isDepart
+          ? '<div>出発 <span>'+fmtTime(w.depart)+'</span></div>'
+          : isFinal
+            ? '<div>到着 <span>'+fmtTime(w.arrive)+'</span></div>'
+            : '<div>到着 <span>'+fmtTime(w.arrive)+'</span></div>'+
+              (w.depart && w.arrive ? '<div>納品時間 <span>'+fmtDuration(w.arrive,w.depart)+'</span></div>' : '')+
+              '<div class="wp-temp-wrap">庫内温度 <input class="wp-temp-input" type="number" step="0.1" placeholder="℃" value="'+(w.temp||'')+'" oninput="saveTemp('+i+',this.value)">℃</div>'+
+              '<div>出発 <span>'+fmtTime(w.depart)+'</span></div>')+
+      '</div>' : '')+
+    '</div>';
+  }).join('');
+  updateTourStatus();
+  setupDragHandlers();
+}
+
+function saveTemp(i, val){
+  waypoints[i].temp = val;
+  saveState();
+}
+
+function markArrive(i){
+  waypoints[i].arrive = Date.now();
+  saveState();
+  autoSaveMonthly();
+  idbSet('waypoints-backup', JSON.stringify(waypoints));
+  renderWaypoints();
+  var name = getNameByKey(waypoints[i].key);
+  if(name === '会社帰宅'){
+    var nextWp = waypoints[i+1];
+    var hasNext = nextWp && nextWp.key !== null;
+    if(!hasNext) finishTour();
+  }
+}
+function markDepart(i){
+  waypoints[i].depart = Date.now();
+  saveState();
+  autoSaveMonthly();
+  idbSet('waypoints-backup', JSON.stringify(waypoints));
+  renderWaypoints();
+}
+
+// ボタンを押すたびに月次データを上書き保存（当日分を更新）
+function autoSaveMonthly(){
+  try{
+    var now = new Date();
+    var dateStr = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+    var route = document.getElementById('report-route') ? document.getElementById('report-route').value : '';
+    var car = document.getElementById('report-car') ? document.getElementById('report-car').value : '';
+    var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+    if(activeWps.length===0) return;
+
+    var record = {
+      date: dateStr,
+      route: route,
+      car: car,
+      savedAt: now.toLocaleString('ja-JP'),
+      waypoints: activeWps.map(function(w){
+        return {
+          name: getNameByKey(w.key)||'',
+          arrive: w.arrive ? fmtTime(w.arrive) : '',
+          depart: w.depart ? fmtTime(w.depart) : '',
+          temp: w.temp||'',
+        };
+      })
+    };
+
+    // 同じ日付・ルート名のデータがあれば上書き、なければ追加
+    var existing = monthlyData.findIndex(function(r){
+      return r.date===dateStr && r.route===route;
+    });
+    if(existing >= 0){
+      monthlyData[existing] = record;
+    } else {
+      monthlyData.push(record);
+    }
+    saveMonthlyStorage();
+  }catch(e){}
+}
+
+function updateTourStatus(){
+  var el = document.getElementById('tour-status');
+  var setWaypoints = waypoints.filter(function(w){return w.key!==null;});
+  var setCount = setWaypoints.length;
+  var lastWp = setWaypoints[setWaypoints.length-1];
+  var lastDone = lastWp && (getNameByKey(lastWp.key)==='会社帰宅' ? lastWp.arrive : lastWp.depart);
+  var isComplete = !!lastDone;
+  var inProgress = waypoints.find(function(w){return (w.depart || w.arrive) && !(getNameByKey(w.key)==='会社帰宅' ? w.arrive : w.depart);});
+
+  if(setCount===0){
+    el.textContent = '上のリストから配送先を選んで配送を開始しましょう';
+    el.classList.remove('active');
+  } else if(isComplete){
+    el.textContent = '🎉 配送が完了しました！お疲れさまでした';
+    el.classList.add('active');
+  } else if(inProgress){
+    el.textContent = '🚚 配送中... ('+(waypoints.indexOf(inProgress)+1)+'番目の配送先へ向かっています)';
+    el.classList.add('active');
+  } else {
+    el.textContent = '会社出発の「出発」ボタンを押すと記録が始まります';
+    el.classList.remove('active');
+  }
+}
+
+function resetTour(){
+  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）')) return;
+  waypoints = makeEmptyWaypoints();
+  saveState();
+  // レポートのロックを解除
+  unlockReportSilent();
+  renderPicker();
+  renderWaypoints();
+}
+
+function unlockReportSilent(){
+  // 確認なしでロック解除（リセット時用）
+  document.querySelectorAll('#page-history input, #page-history textarea').forEach(function(el){
+    el.readOnly = false;
+    el.style.pointerEvents = '';
+    el.style.opacity = '';
+  });
+  document.querySelectorAll('#page-history input[type="radio"]').forEach(function(el){
+    el.disabled = false;
+  });
+  var banner = document.getElementById('lock-banner');
+  if(banner) banner.parentNode.removeChild(banner);
+  var imgBtn = document.getElementById('img-btn');
+  if(imgBtn){
+    imgBtn.textContent = '🖼 画像として保存';
+    imgBtn.style.borderColor = '#5cffb0';
+    imgBtn.style.color = '#5cffb0';
+    imgBtn.disabled = false;
+  }
+  try{ idbSet('report-locked','0'); }catch(e){}
+  try{ window.storage.set('report-locked','0',false); }catch(e){}
+}
+
+// ===== 配送完了記録 =====
+var rideHistory = [];
+
+function finishTour(){
+  var now = new Date();
+  var visitedSpots = waypoints.filter(function(w){return w.key!==null;}).map(function(w){
+    var name = getNameByKey(w.key);
+    var letter = w.key.split('-')[1];
+    return letter+' '+name+'（'+fmtTime(w.arrive)+'→'+fmtTime(w.depart)+'）';
+  });
+  rideHistory.unshift({
+    date: (now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0'),
+    count: visitedSpots.length,
+    spots: visitedSpots,
+  });
+}
+
+// ===== 履歴 =====
+function renderHistory(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+  document.getElementById('report-date').textContent = dateStr;
+
+  var tbody = document.getElementById('report-tbody');
+  var emptyEl = document.getElementById('hist-empty');
+
+  // 配送欄に設定された配送先を取得（記録済み or 未記録）
+  var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+
+  if(activeWps.length===0){
+    tbody.innerHTML = '';
+    emptyEl.style.display='block';
+    document.getElementById('report-count').textContent = '0';
+    return;
+  }
+  emptyEl.style.display='none';
+
+  var MAX_ROWS = 35;
+  var page1Wps = activeWps.slice(0, MAX_ROWS);
+  var page2Wps = activeWps.slice(MAX_ROWS);
+  var dataRows = page1Wps;
+  var rows = dataRows.map(function(w, i){
+    var name = getNameByKey(w.key) || '';
+    var isFinal = name === '会社帰宅';
+    var isFirst = name === '会社出発';
+    var numLabel = isFirst ? '出' : (isFinal ? '着' : String(i));
+
+    var arriveTime = isFirst ? '' : fmtTime(w.arrive);
+    var departTime = isFinal ? '' : fmtTime(w.depart);
+
+    // 移動時間：前の地点の出発→この地点の到着
+    var moveTime = '';
+    if(!isFirst && w.arrive && i>0 && activeWps[i-1].depart){
+      moveTime = fmtDuration(activeWps[i-1].depart, w.arrive);
+    }
+
+    // 納品時間
+    var delivTime = (!isFirst && !isFinal && w.arrive && w.depart)
+      ? fmtDuration(w.arrive, w.depart) : '';
+
+    return '<tr>'+
+      '<td class="td-num">'+numLabel+'</td>'+
+      '<td class="td-time">'+arriveTime+'</td>'+
+      '<td class="td-time">'+departTime+'</td>'+
+      '<td class="td-time">'+moveTime+'</td>'+
+      '<td class="td-time">'+delivTime+'</td>'+
+      '<td class="td-time">'+(w.temp||'')+'</td>'+
+      '<td class="td-name">'+escHtml(name)+'</td>'+
+      '<td><input class="td-input sales-input" placeholder="0"></td>'+
+      '<td><input class="td-input" placeholder=""></td>'+
+    '</tr>';
+  }).join('');
+
+  // 35行になるよう空行を追加
+  var emptyRow = '<tr><td class="td-num"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-name"></td><td><input class="td-input sales-input" placeholder="0"></td><td><input class="td-input" placeholder=""></td></tr>';
+  for(var ei = dataRows.length; ei < MAX_ROWS; ei++){
+    rows += emptyRow;
+  }
+
+  tbody.innerHTML = rows;
+
+  // 件数（会社出発・会社帰宅を除く）
+  var count = activeWps.filter(function(w){
+    var n = getNameByKey(w.key);
+    return n !== '会社出発' && n !== '会社帰宅';
+  }).length;
+  document.getElementById('report-count').textContent = count;
+
+  // 配送所要時間（会社出発の出発時刻→会社帰宅の到着時刻）
+  var totalTimeEl = document.getElementById('report-total-time');
+  if(totalTimeEl){
+    var departWp = activeWps.find(function(w){ return getNameByKey(w.key)==='会社出発'; });
+    var arriveWp = activeWps.slice().reverse().find(function(w){ return getNameByKey(w.key)==='会社帰宅'; });
+    if(departWp && departWp.depart && arriveWp && arriveWp.arrive){
+      totalTimeEl.textContent = fmtDuration(departWp.depart, arriveWp.arrive);
+    } else {
+      totalTimeEl.textContent = '--';
+    }
+  }
+
+  // 2ページ目
+  var page2El = document.getElementById('report-page2');
+  var tbody2 = document.getElementById('report-tbody2');
+  if(page2Wps.length > 0){
+    page2El.style.display = 'block';
+    document.getElementById('report-date2').textContent = dateStr;
+    document.getElementById('report-route2').textContent = document.getElementById('report-route').value || '';
+    document.getElementById('report-car2').textContent = document.getElementById('report-car').value || '';
+    var emptyRow2 = '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td><input class="td-input sales-input" placeholder="0"></td><td><input class="td-input" placeholder=""></td></tr>';
+    var rows2 = page2Wps.map(function(w, i){
+      var ri = i + MAX_ROWS;
+      var name = getNameByKey(w.key) || '';
+      var isFinal = name === '会社帰宅';
+      var isFirst = name === '会社出発';
+      var numLabel = isFirst ? '出' : (isFinal ? '着' : String(ri));
+      var arriveTime = isFirst ? '' : fmtTime(w.arrive);
+      var departTime = isFinal ? '' : fmtTime(w.depart);
+      var moveTime = '';
+      if(!isFirst && w.arrive && ri>0 && activeWps[ri-1] && activeWps[ri-1].depart){
+        moveTime = fmtDuration(activeWps[ri-1].depart, w.arrive);
+      }
+      var delivTime = (!isFirst && !isFinal && w.arrive && w.depart) ? fmtDuration(w.arrive, w.depart) : '';
+      return '<tr>'+
+        '<td class="td-num">'+numLabel+'</td>'+
+        '<td class="td-time">'+arriveTime+'</td>'+
+        '<td class="td-time">'+departTime+'</td>'+
+        '<td class="td-time">'+moveTime+'</td>'+
+        '<td class="td-time">'+delivTime+'</td>'+
+        '<td class="td-time">'+(w.temp||'')+'</td>'+
+        '<td class="td-name">'+escHtml(name)+'</td>'+
+        '<td><input class="td-input sales-input" placeholder="0"></td>'+
+        '<td><input class="td-input" placeholder=""></td>'+
+      '</tr>';
+    }).join('');
+    var emptyRow2 = '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><input class="td-input sales-input" placeholder="0"></td><td><input class="td-input" placeholder=""></td></tr>';
+    for(var ei2=page2Wps.length; ei2<MAX_ROWS; ei2++) rows2 += emptyRow2;
+    tbody2.innerHTML = rows2;
+  } else {
+    page2El.style.display = 'none';
+    tbody2.innerHTML = '';
+  }
+}
+
+// ===== 配送欄：長押しで順番入れ替え =====
+var dragSrcIdx = null;
+var longPressTimer = null;
+var LONG_PRESS_MS = 600;
+var justActivated = false;
+var touchMoved = false;
+var touchStartX = 0;
+var touchStartY = 0;
+
+function setupDragHandlers(){
+  dragSrcIdx = null;
+  var cards = document.querySelectorAll('.wp-card[data-idx]');
+  cards.forEach(function(card){
+    var idx = parseInt(card.dataset.idx);
+    var num = card.querySelector('.wp-num.draggable');
+
+    if(num){
+      num.addEventListener('touchstart', function(e){
+        justActivated = false;
+        touchMoved = false;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        longPressTimer = setTimeout(function(){
+          justActivated = true;
+          dragSrcIdx = idx;
+          document.querySelectorAll('.wp-card').forEach(function(c){
+            c.classList.remove('drag-over','dragging');
+          });
+          card.classList.add('dragging');
+          navigator.vibrate && navigator.vibrate(60);
+          document.querySelectorAll('.wp-card[data-idx]').forEach(function(c){
+            if(parseInt(c.dataset.idx) !== idx && c.querySelector('.wp-num.draggable')){
+              c.classList.add('drag-over');
+            }
+          });
+          showDragHint('入れ替えたい番号をタップ／同じ番号でキャンセル');
+        }, LONG_PRESS_MS);
+      }, {passive:true});
+
+      num.addEventListener('touchmove', function(e){
+        var dx = Math.abs(e.touches[0].clientX - touchStartX);
+        var dy = Math.abs(e.touches[0].clientY - touchStartY);
+        if(dx > 8 || dy > 8){
+          touchMoved = true;
+          clearTimeout(longPressTimer);
+        }
+      }, {passive:true});
+
+      num.addEventListener('touchend', function(e){
+        clearTimeout(longPressTimer);
+        if(justActivated){
+          justActivated = false;
+          e.stopPropagation();
+        }
+      });
+    }
+
+    // カードをタップで移動先に確定（スクロール中は無視）
+    card.addEventListener('touchstart', function(e){
+      touchMoved = false;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, {passive:true});
+
+    card.addEventListener('touchmove', function(e){
+      var dx = Math.abs(e.touches[0].clientX - touchStartX);
+      var dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if(dx > 8 || dy > 8) touchMoved = true;
+    }, {passive:true});
+
+    card.addEventListener('touchend', function(e){
+      if(dragSrcIdx === null) return;
+      // スクロール中はタップとみなさない
+      if(touchMoved) return;
+      e.stopPropagation();
+      if(dragSrcIdx === idx){
+        document.querySelectorAll('.wp-card').forEach(function(c){ c.classList.remove('drag-over','dragging'); });
+        dragSrcIdx = null;
+        hideDragHint();
+        return;
+      }
+      document.querySelectorAll('.wp-card').forEach(function(c){ c.classList.remove('drag-over','dragging'); });
+      swapWaypoints(dragSrcIdx, idx);
+      dragSrcIdx = null;
+      hideDragHint();
+    });
+  });
+}
+
+function showDragHint(msg){
+  var hint = document.getElementById('drag-hint');
+  if(!hint){
+    hint = document.createElement('div');
+    hint.id = 'drag-hint';
+    hint.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a2a45;border:1px solid #ffd166;color:#ffd166;padding:8px 16px;border-radius:20px;font-size:11px;z-index:9999;text-align:center;white-space:nowrap;';
+    document.body.appendChild(hint);
+  }
+  hint.textContent = msg;
+  hint.style.display = 'block';
+}
+
+function hideDragHint(){
+  var hint = document.getElementById('drag-hint');
+  if(hint) hint.style.display = 'none';
+}
+
+function swapWaypoints(a, b){
+  var tmp = waypoints[a];
+  waypoints[a] = waypoints[b];
+  waypoints[b] = tmp;
+  renderPicker();
+  renderWaypoints();
+  saveState();
+}
+
+// ===== 月次データ管理 =====
+var monthlyData = []; // {date, route, car, waypoints}
+
+// ===== IndexedDB（アプリを閉じても消えない永続保存）=====
+var DB_NAME = 'delivery-app-db';
+var DB_VERSION = 1;
+var DB_STORE = 'monthly';
+var db = null;
+
+function openDB(){
+  return new Promise(function(resolve, reject){
+    if(db){ resolve(db); return; }
+    var req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = function(e){
+      e.target.result.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = function(e){ db = e.target.result; resolve(db); };
+    req.onerror = function(){ reject('DB open failed'); };
+  });
+}
+
+function idbSet(key, value){
+  return openDB().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put(value, key);
+      tx.oncomplete = function(){ resolve(); };
+      tx.onerror = function(){ reject(); };
+    });
+  });
+}
+
+function idbGet(key){
+  return openDB().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(DB_STORE, 'readonly');
+      var req = tx.objectStore(DB_STORE).get(key);
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(); };
+    });
+  });
+}
+
+async function saveMonthlyStorage(){
+  var json = JSON.stringify(monthlyData);
+  // IndexedDB（メイン）
+  try{ await idbSet('monthly-data', json); }catch(e){}
+  // window.storage（バックアップ）
+  try{ await window.storage.set('monthly-data', json, false); }catch(e){}
+}
+
+async function loadMonthlyData(){
+  var loaded = false;
+  // IndexedDB から読み込む（優先）
+  try{
+    var val = await idbGet('monthly-data');
+    if(val){
+      monthlyData = JSON.parse(val);
+      loaded = true;
+    }
+  }catch(e){}
+  // IndexedDBがダメならwindow.storageから
+  if(!loaded){
+    try{
+      var r = await window.storage.get('monthly-data', false);
+      if(r && r.value){
+        monthlyData = JSON.parse(r.value);
+        // window.storageにあればIndexedDBにも保存
+        await idbSet('monthly-data', r.value);
+      }
+    }catch(e){}
+  }
+}
+
+function saveMonthlyData(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+  var route = document.getElementById('report-route') ? document.getElementById('report-route').value : '';
+  var car = document.getElementById('report-car') ? document.getElementById('report-car').value : '';
+  var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+  if(activeWps.length===0){
+    showMonthlyStatus('配送データがありません');
+    return;
+  }
+  var record = {
+    date: dateStr,
+    route: route,
+    car: car,
+    savedAt: now.toLocaleString('ja-JP'),
+    waypoints: activeWps.map(function(w){
+      return {
+        name: getNameByKey(w.key)||'',
+        arrive: w.arrive ? fmtTime(w.arrive) : '',
+        depart: w.depart ? fmtTime(w.depart) : '',
+        temp: w.temp||'',
+      };
+    })
+  };
+  // 同じ日付・ルートがあれば上書き、なければ追加
+  var existing = monthlyData.findIndex(function(r){
+    return r.date===dateStr && r.route===route;
+  });
+  if(existing >= 0){
+    monthlyData[existing] = record;
+    showMonthlyStatus(dateStr+'（'+route+'）を更新しました（合計'+monthlyData.length+'件）');
+  } else {
+    monthlyData.push(record);
+    showMonthlyStatus(dateStr+'（'+route+'）を追加しました（合計'+monthlyData.length+'件）');
+  }
+  saveMonthlyStorage();
+  showPastList();
+}
+
+// ===== 集計ページ：報告書（売上込み）を日付別に保存 =====
+function showStatsStatus(msg){
+  var el = document.getElementById('stats-status');
+  if(el) el.textContent = msg;
+  setTimeout(function(){ if(el) el.textContent=''; }, 3000);
+}
+
+function saveTodayReport(silent){
+  saveReportInputs();
+  var now = new Date();
+  var dateStr = now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+  var route = document.getElementById('report-route') ? document.getElementById('report-route').value.trim() : '';
+  var car = document.getElementById('report-car') ? document.getElementById('report-car').value : '';
+  var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+  if(activeWps.length===0){
+    if(!silent) showStatsStatus('配送データがありません。先に「配送欄」で記録してください');
+    return;
+  }
+  var recordId = dateStr+'::'+route;
+  var salesInputs = document.querySelectorAll('#report-tbody .sales-input, #report-tbody2 .sales-input');
+  var memoInputs = document.querySelectorAll('#report-tbody .td-input:not(.sales-input), #report-tbody2 .td-input:not(.sales-input)');
+  var stops = activeWps.map(function(w, i){
+    var sInput = salesInputs[i];
+    var mInput = memoInputs[i];
+    var name = getNameByKey(w.key) || '';
+    var isFirst = name === '会社出発';
+    var isFinal = name === '会社帰宅';
+    var moveTime = '';
+    if(!isFirst && w.arrive && i>0 && activeWps[i-1].depart){
+      moveTime = fmtDuration(activeWps[i-1].depart, w.arrive);
+    }
+    var delivTime = (!isFirst && !isFinal && w.arrive && w.depart)
+      ? fmtDuration(w.arrive, w.depart) : '';
+    return {
+      name: name,
+      arrive: isFirst ? '' : (w.arrive ? fmtTime(w.arrive) : ''),
+      depart: isFinal ? '' : (w.depart ? fmtTime(w.depart) : ''),
+      move: moveTime,
+      deliv: delivTime,
+      temp: w.temp || '',
+      sales: sInput ? (parseInt(sInput.value, 10) || 0) : 0,
+      memo: mInput ? (mInput.value || '') : ''
+    };
+  });
+  var salesTotal = stops.reduce(function(sum, s){ return sum + s.sales; }, 0);
+  var truckEl = document.querySelector('input[name="truck"]:checked');
+  var record = {
+    id: recordId,
+    date: dateStr,
+    route: route,
+    car: car,
+    count: document.getElementById('report-count') ? document.getElementById('report-count').textContent : '0',
+    totalTime: document.getElementById('report-total-time') ? document.getElementById('report-total-time').textContent : '--',
+    kmStart: document.getElementById('report-km-start') ? document.getElementById('report-km-start').value : '',
+    kmEnd: document.getElementById('report-km-end') ? document.getElementById('report-km-end').value : '',
+    kmTotal: document.getElementById('report-km-total') ? document.getElementById('report-km-total').textContent : '--',
+    memo: document.getElementById('report-memo') ? document.getElementById('report-memo').value : '',
+    memo2: document.getElementById('report-memo2') ? document.getElementById('report-memo2').value : '',
+    truck: truckEl ? (truckEl.value === 'good' ? '良' : '不良') : '',
+    savedAt: now.toLocaleString('ja-JP'),
+    salesTotal: salesTotal,
+    stops: stops
+  };
+  var existing = monthlyData.findIndex(function(r){ return r.id ? r.id===recordId : (r.date===dateStr && r.route===route); });
+  if(existing >= 0){
+    monthlyData[existing] = record;
+    if(!silent) showStatsStatus(dateStr+'（'+(route||'ルート未設定')+'）を更新しました');
+  } else {
+    monthlyData.push(record);
+    if(!silent) showStatsStatus(dateStr+'（'+(route||'ルート未設定')+'）を保存しました');
+  }
+  saveMonthlyStorage();
+  // 集計ページが表示中なら最新化（今開いている詳細と同じ記録ならIDで照合して詳細も更新）
+  var statsPage = document.getElementById('page-stats');
+  if(statsPage.classList.contains('active')){
+    if(document.getElementById('stats-detail').style.display === 'block' && statsSelectedId === recordId){
+      showStatsDetail(recordId);
+    } else if(document.getElementById('stats-detail').style.display !== 'block'){
+      renderStatsList();
+    }
+  }
+  showAutoSaveBadge();
+}
+
+// ===== 自動保存（デバウンス）=====
+var autoSaveReportTimer = null;
+function scheduleAutoSaveReport(){
+  if(autoSaveReportTimer) clearTimeout(autoSaveReportTimer);
+  autoSaveReportTimer = setTimeout(function(){
+    saveTodayReport(true);
+  }, 900);
+}
+
+function showAutoSaveBadge(){
+  var el = document.getElementById('stats-status');
+  if(!el) return;
+  el.textContent = '✓ 自動保存済み';
+  if(el._badgeTimer) clearTimeout(el._badgeTimer);
+  el._badgeTimer = setTimeout(function(){ el.textContent=''; }, 2000);
+}
+
+// 日付表記を「YYYY/MM/DD」（0埋め）に統一する
+function normalizeDateStr(d){
+  if(!d) return d;
+  var parts = String(d).split('/');
+  if(parts.length !== 3) return d;
+  var y = parts[0];
+  var m = String(parts[1]).padStart(2, '0');
+  var day = String(parts[2]).padStart(2, '0');
+  return y+'/'+m+'/'+day;
+}
+
+function renderStatsList(){
+  var listEl = document.getElementById('stats-list');
+  var emptyEl = document.getElementById('stats-empty');
+  document.getElementById('stats-detail').style.display = 'none';
+
+  if(!monthlyData || monthlyData.length === 0){
+    listEl.innerHTML = '';
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    document.getElementById('stats-month-total').textContent = '0';
+    document.getElementById('stats-month-days').textContent = '0';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  listEl.style.display = 'block';
+
+  // 日付表記を「YYYY/MM/DD」（0埋め）に統一し、idを付与、同一idの重複データを統合
+  var seenIdx = {};
+  var deduped = [];
+  var changed = false;
+  monthlyData.forEach(function(r){
+    var normDate = normalizeDateStr(r.date);
+    if(normDate !== r.date){ r.date = normDate; changed = true; }
+    var properId = (r.date||'')+'::'+(r.route||'').trim();
+    if(r.id !== properId){ r.id = properId; changed = true; }
+    if(seenIdx[r.id] === undefined){
+      seenIdx[r.id] = deduped.length;
+      deduped.push(r);
+    } else {
+      // 重複：店舗データ(stops)が多い方＝より完全な記録を残す
+      var i2 = seenIdx[r.id];
+      var oldScore = (deduped[i2].stops && deduped[i2].stops.length) || 0;
+      var newScore = (r.stops && r.stops.length) || 0;
+      if(newScore >= oldScore){ deduped[i2] = r; }
+      changed = true;
+    }
+  });
+  if(changed){
+    monthlyData = deduped;
+    saveMonthlyStorage();
+  }
+
+  var sorted = monthlyData.slice().sort(function(a, b){ return a.date < b.date ? 1 : -1; });
+
+  // 今月の合計
+  var now = new Date();
+  var ymNow = now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0');
+  var monthRecords = sorted.filter(function(r){ return (r.date||'').indexOf(ymNow) === 0; });
+  var monthTotal = monthRecords.reduce(function(sum, r){ return sum + (r.salesTotal||0); }, 0);
+  document.getElementById('stats-month-total').textContent = monthTotal.toLocaleString();
+  document.getElementById('stats-month-days').textContent = monthRecords.length;
+
+  var html = '';
+  var lastYm = '';
+  sorted.forEach(function(r){
+    var ym = (r.date||'').slice(0,7);
+    if(ym !== lastYm){
+      var ymRecords = sorted.filter(function(rr){ return (rr.date||'').slice(0,7) === ym; });
+      var ymTotal = ymRecords.reduce(function(sum, rr){ return sum + (rr.salesTotal||0); }, 0);
+      html += '<div class="stats-month-head"><span>'+ym.replace('/','年')+'月</span><span>合計 '+ymTotal.toLocaleString()+'円　('+ymRecords.length+'日)</span></div>';
+      lastYm = ym;
+    }
+    html += '<div class="stats-item" data-record-id="'+escHtml(r.id)+'">'+
+      '<div class="stats-item-left"><span class="stats-item-date">'+escHtml(r.date)+'</span><span class="stats-item-route">'+escHtml(r.route||'（ルート未設定）')+'</span></div>'+
+      '<span class="stats-item-sales">'+((r.salesTotal||0).toLocaleString())+'円</span>'+
+    '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+// リスト項目のクリックをイベント委譲で処理（idベースなので並び替え・削除があってもズレない）
+document.getElementById('stats-list').addEventListener('click', function(e){
+  var item = e.target.closest('.stats-item');
+  if(item && item.dataset.recordId){ showStatsDetail(item.dataset.recordId); }
+});
+
+var statsSelectedId = null;
+
+function showStatsDetail(id){
+  var r = monthlyData.find(function(rr){ return rr.id === id; });
+  if(!r) return;
+  statsSelectedId = id;
+  var delBtn = document.getElementById('stats-delete-btn');
+  if(delBtn){
+    if(delBtn._confirmTimer) clearTimeout(delBtn._confirmTimer);
+    delBtn.dataset.confirming = 'no';
+    delBtn.textContent = '🗑 削除';
+    delBtn.style.background = 'transparent';
+    delBtn.style.color = '#ff5c5c';
+  }
+  document.getElementById('stats-list').style.display = 'none';
+  document.getElementById('stats-empty').style.display = 'none';
+  document.getElementById('stats-detail').style.display = 'block';
+  document.getElementById('stats-detail-title').innerHTML =
+    '<div class="report-row">'+
+      '<span class="rh-label">日付</span><span class="rh-val">'+escHtml(r.date)+'</span>'+
+      '<span class="rh-label" style="margin-left:12px;">ルート名</span><span class="rh-val">'+escHtml(r.route||'ルート未設定')+'</span>'+
+      '<span class="rh-label" style="margin-left:12px;">車輌No</span><span class="rh-val">'+escHtml(r.car||'-')+'</span>'+
+    '</div>'+
+    '<div class="report-row">'+
+      '<span class="rh-label">走行距離</span>'+
+      '<span class="rh-val">'+escHtml(r.kmStart||'-')+' km 〜 '+escHtml(r.kmEnd||'-')+' km（計 '+escHtml(r.kmTotal||'--')+' km）</span>'+
+    '</div>'+
+    '<div class="report-row">'+
+      '<span class="rh-label">所要時間</span><span class="rh-val">'+escHtml(r.totalTime||'--')+'</span>'+
+      '<span class="rh-label" style="margin-left:12px;">配送件数</span><span class="rh-val">'+escHtml(r.count||'0')+'件</span>'+
+      '<span class="rh-label" style="margin-left:12px;">台車</span><span class="rh-val">'+escHtml(r.truck||'未選択')+'</span>'+
+    '</div>';
+
+  var tbody = document.getElementById('stats-detail-tbody');
+  if(!r.stops || r.stops.length === 0){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#3a4a6a;">データなし</td></tr>';
+  } else {
+    tbody.innerHTML = r.stops.map(function(s, i){
+      var isFirst = s.name === '会社出発';
+      var isFinal = s.name === '会社帰宅';
+      var numLabel = isFirst ? '出' : (isFinal ? '着' : String(i));
+      return '<tr>'+
+        '<td class="sd-num">'+numLabel+'</td>'+
+        '<td class="sd-time">'+escHtml(s.arrive||'')+'</td>'+
+        '<td class="sd-time">'+escHtml(s.depart||'')+'</td>'+
+        '<td class="sd-move">'+escHtml(s.move||'')+'</td>'+
+        '<td class="sd-move">'+escHtml(s.deliv||'')+'</td>'+
+        '<td class="sd-move">'+escHtml(s.temp||'')+'</td>'+
+        '<td class="sd-name">'+escHtml(s.name)+'</td>'+
+        '<td class="sd-sales">'+(s.sales ? s.sales.toLocaleString() : '')+'</td>'+
+        '<td class="sd-memo">'+escHtml(s.memo||'')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  var memoEl = document.getElementById('stats-detail-memo');
+  var lines = [
+    '売上合計：'+((r.salesTotal||0).toLocaleString())+'円'
+  ];
+  if(r.memo) lines.push('本日の報告：'+r.memo);
+  if(r.memo2) lines.push('報告（続き）：'+r.memo2);
+  memoEl.textContent = lines.join('\n');
+}
+
+function closeStatsDetail(){
+  statsSelectedId = null;
+  document.getElementById('stats-detail').style.display = 'none';
+  renderStatsList();
+}
+
+function deleteStatsRecord(){
+  if(statsSelectedId === null) return;
+  var idx = monthlyData.findIndex(function(rr){ return rr.id === statsSelectedId; });
+  if(idx < 0) return;
+  var btn = document.getElementById('stats-delete-btn');
+  if(btn.dataset.confirming !== 'yes'){
+    btn.dataset.confirming = 'yes';
+    btn.textContent = '本当に削除？もう一度タップ';
+    btn.style.background = '#ff5c5c';
+    btn.style.color = '#0a0e16';
+    if(btn._confirmTimer) clearTimeout(btn._confirmTimer);
+    btn._confirmTimer = setTimeout(function(){
+      btn.dataset.confirming = 'no';
+      btn.textContent = '🗑 削除';
+      btn.style.background = 'transparent';
+      btn.style.color = '#ff5c5c';
+    }, 3000);
+    return;
+  }
+  if(btn._confirmTimer) clearTimeout(btn._confirmTimer);
+  btn.dataset.confirming = 'no';
+  btn.textContent = '🗑 削除';
+  btn.style.background = 'transparent';
+  btn.style.color = '#ff5c5c';
+
+  monthlyData.splice(idx, 1);
+  saveMonthlyStorage();
+  statsSelectedId = null;
+  document.getElementById('stats-detail').style.display = 'none';
+  renderStatsList();
+  showStatsStatus('記録を削除しました');
+}
+
+function exportMonthlyData(){
+  if(monthlyData.length===0){
+    showMonthlyStatus('月次データがありません。先に「本日の記録を追加」してください');
+    return;
+  }
+  var now = new Date();
+  var fileName = now.getFullYear()+'年'+(now.getMonth()+1)+'月_配送データ.json';
+  var blob = new Blob([JSON.stringify(monthlyData, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
+  showMonthlyStatus(monthlyData.length+'件の記録を出力しました');
+}
+
+// 「過去データを見る」ボタン：データがあれば一覧、なければファイル選択
+async function handleLoadBtn(){
+  await loadAndShowPastData();
+  if(monthlyData.length === 0){
+    showMonthlyStatus('保存済みデータがありません。ファイルから読み込みます');
+    document.getElementById('monthly-import').click();
+  }
+}
+
+async function loadAndShowPastData(){
+  await loadMonthlyData();
+  if(monthlyData.length > 0){
+    showPastList();
+  }
+}
+
+function importMonthlyData(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('invalid');
+      monthlyData = data;
+      saveMonthlyStorage();
+      showMonthlyStatus(data.length+'件の月次データを読み込みました');
+      showPastList(); // 読み込み後に一覧表示
+    }catch(err){
+      showMonthlyStatus('ファイルが正しくありません');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function showMonthlyStatus(msg){
+  var el = document.getElementById('monthly-status');
+  if(el) el.textContent = msg;
+  setTimeout(function(){ if(el) el.textContent=''; }, 3000);
+}
+
+// ===== 過去データ一覧表示 =====
+function closePastData(){
+  document.getElementById('past-data-section').style.display='none';
+  document.getElementById('past-detail-section').style.display='none';
+}
+
+// ===== 過去データ詳細表示 =====
+function showPastDetail(idx){
+  var r = monthlyData[idx];
+  if(!r) return;
+
+  document.getElementById('past-data-section').style.display='none';
+  document.getElementById('past-detail-section').style.display='block';
+  document.getElementById('past-detail-title').textContent = r.date+'　'+r.route;
+
+  var tbody = document.getElementById('past-detail-tbody');
+  if(!r.waypoints || r.waypoints.length===0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#3a4a6a;">データなし</td></tr>';
+    return;
+  }
+  tbody.innerHTML = r.waypoints.map(function(w, i){
+    var isFinal = w.name==='会社帰宅';
+    var isFirst = w.name==='会社出発';
+    var numLabel = isFirst ? '出' : (isFinal ? '着' : String(i));
+    return '<tr>'+
+      '<td class="past-td-num">'+numLabel+'</td>'+
+      '<td class="past-td-time">'+(w.arrive||'—')+'</td>'+
+      '<td class="past-td-time">'+(w.depart||'—')+'</td>'+
+      '<td class="past-td-time">'+(w.temp||'—')+'</td>'+
+      '<td class="past-td-name">'+escHtml(w.name)+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+function showPastList(){
+  document.getElementById('past-detail-section').style.display='none';
+  document.getElementById('past-data-section').style.display='block';
+  var list = document.getElementById('past-data-list');
+  if(monthlyData.length===0){
+    list.innerHTML = '<div style="text-align:center;color:#3a4a6a;padding:20px;font-size:11px;">データがありません</div>';
+    return;
+  }
+  var sorted = monthlyData.slice().reverse();
+  list.innerHTML = sorted.map(function(r, i){
+    var realIdx = monthlyData.length - 1 - i;
+    var count = r.waypoints ? r.waypoints.filter(function(w){
+      return w.name !== '会社出発' && w.name !== '会社帰宅';
+    }).length : 0;
+    return '<div class="past-item" onclick="showPastDetail('+realIdx+')">'+
+      '<div>'+
+        '<div class="past-item-date">'+r.date+'　'+r.route+'</div>'+
+        '<div class="past-item-route">車番: '+(r.car||'—')+'　配送'+count+'件</div>'+
+      '</div>'+
+      '<div class="past-item-arrow">›</div>'+
+    '</div>';
+  }).join('');
+}
+
+function saveReportImage(){
+  var btn = document.getElementById('img-btn');
+  btn.textContent = '⏳ 生成中...';
+  btn.disabled = true;
+
+  // input値をspanに変換
+  var inputs = document.querySelectorAll('#report-tbody input, #report-tbody2 input, #report-km-start, #report-km-end');
+  var replaced = [];
+  inputs.forEach(function(input){
+    var span = document.createElement('span');
+    span.textContent = input.value || '';
+    input.parentNode.insertBefore(span, input);
+    input.style.display = 'none';
+    replaced.push({input:input, span:span});
+  });
+
+  var target = document.getElementById('page-history');
+
+  html2canvas(target, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#0a0e16',
+    logging: false,
+    windowWidth: target.scrollWidth,
+    windowHeight: target.scrollHeight
+  }).then(function(canvas){
+    // 元に戻す
+    replaced.forEach(function(r){
+      r.span.parentNode.removeChild(r.span);
+      r.input.style.display = '';
+    });
+
+    var now = new Date();
+    var dateStr = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+    var route = (document.getElementById('report-route')||{}).value || '配送';
+    var fileName = dateStr+'_'+route+'_配送報告書.png';
+
+    var a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = fileName;
+    a.click();
+
+    // 保存後にロックとクリップボードコピー
+    lockReport();
+
+    btn.textContent = '🔒 保存済み（ロック中）';
+    btn.style.borderColor = '#ff5c5c';
+    btn.style.color = '#ff5c5c';
+    btn.disabled = true;
+
+    // クリップボードに画像をコピー
+    canvas.toBlob(function(blob){
+      try{
+        var item = new ClipboardItem({'image/png': blob});
+        navigator.clipboard.write([item]).then(function(){
+          showCopyImageResult('✅ 画像をクリップボードにコピーしました！\nGmailなどに貼り付けて送信できます');
+        }).catch(function(){
+          showCopyImageResult('📥 画像を保存しました\nギャラリーからGmailに添付してください');
+        });
+      }catch(e){
+        showCopyImageResult('📥 画像を保存しました\nギャラリーからGmailに添付してください');
+      }
+    },'image/png');
+
+  }).catch(function(e){
+    replaced.forEach(function(r){
+      r.span.parentNode.removeChild(r.span);
+      r.input.style.display = '';
+    });
+    btn.textContent = '🖼 画像として保存';
+    btn.disabled = false;
+    alert('画像の生成に失敗しました');
+  });
+}
+
+function showCopyImageResult(msg){
+  var existing = document.getElementById('copy-result-banner');
+  if(existing) existing.parentNode.removeChild(existing);
+  var banner = document.createElement('div');
+  banner.id = 'copy-result-banner';
+  banner.textContent = msg;
+  banner.style.cssText = 'background:#0a2a1a;border:1px solid #5cffb0;color:#5cffb0;padding:10px 14px;border-radius:8px;margin-top:8px;font-size:12px;text-align:center;white-space:pre-line;';
+  var actionBtns = document.getElementById('report-action-btns');
+  actionBtns.parentNode.insertBefore(banner, actionBtns.nextSibling);
+  setTimeout(function(){
+    if(banner.parentNode) banner.parentNode.removeChild(banner);
+  }, 5000);
+}
+
+function lockReport(){
+  // 全入力欄を読み取り専用にする
+  document.querySelectorAll('#page-history input, #page-history textarea').forEach(function(el){
+    el.readOnly = true;
+    el.style.pointerEvents = 'none';
+    el.style.opacity = '0.7';
+  });
+  document.querySelectorAll('#page-history input[type="radio"]').forEach(function(el){
+    el.disabled = true;
+  });
+  // ロック表示バナーを追加
+  var banner = document.createElement('div');
+  banner.id = 'lock-banner';
+  banner.innerHTML = '🔒 画像保存済み - 編集ロック中　<button onclick="unlockReport()" style="margin-left:12px;padding:4px 12px;background:transparent;border:1px solid #ffd166;color:#ffd166;border-radius:6px;font-size:11px;cursor:pointer;">🔓 ロック解除</button>';
+  banner.style.cssText = 'background:#1a0a0a;border:1px solid #ff5c5c;color:#ff5c5c;padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:12px;text-align:center;';
+  var actionBtns = document.getElementById('report-action-btns');
+  actionBtns.parentNode.insertBefore(banner, actionBtns.nextSibling);
+  // ロック状態を保存
+  try{ idbSet('report-locked','1'); }catch(e){}
+  try{ window.storage.set('report-locked','1',false); }catch(e){}
+}
+
+async function checkReportLock(){
+  try{
+    var val = await idbGet('report-locked');
+    if(!val){
+      try{
+        var r = await window.storage.get('report-locked', false);
+        if(r && r.value){ val = r.value; idbSet('report-locked', val); }
+      }catch(e){}
+    }
+    if(val === '1'){
+      lockReport();
+    }
+  }catch(e){}
+}
+
+function unlockReport(){
+  if(!confirm('ロックを解除して編集を再開しますか？')) return;
+  document.querySelectorAll('#page-history input, #page-history textarea').forEach(function(el){
+    el.readOnly = false;
+    el.style.pointerEvents = '';
+    el.style.opacity = '';
+  });
+  document.querySelectorAll('#page-history input[type="radio"]').forEach(function(el){
+    el.disabled = false;
+  });
+  var banner = document.getElementById('lock-banner');
+  if(banner) banner.parentNode.removeChild(banner);
+  var imgBtn = document.getElementById('img-btn');
+  if(imgBtn){
+    imgBtn.textContent = '🖼 画像として保存';
+    imgBtn.style.borderColor = '#5cffb0';
+    imgBtn.style.color = '#5cffb0';
+    imgBtn.disabled = false;
+  }
+  try{ idbSet('report-locked','0'); }catch(e){}
+  try{ window.storage.set('report-locked','0',false); }catch(e){}
+}
+
+function sendReport(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+  var route = (document.getElementById('report-route')||{}).value || '';
+  var car = (document.getElementById('report-car')||{}).value || '';
+  var salesTotal = (document.getElementById('report-sales-total')||{}).textContent || '0';
+  var count = (document.getElementById('report-count')||{}).textContent || '0';
+  var totalTime = (document.getElementById('report-total-time')||{}).textContent || '--';
+  var kmStart = (document.getElementById('report-km-start')||{}).value || '';
+  var kmEnd = (document.getElementById('report-km-end')||{}).value || '';
+  var kmTotal = (document.getElementById('report-km-total')||{}).textContent || '--';
+  var memo = (document.getElementById('report-memo')||{}).value || '';
+  var truck = document.querySelector('input[name="truck"]:checked');
+  var truckStatus = truck ? (truck.value === 'good' ? '良' : '不良') : '未選択';
+
+  // 売上データ収集
+  var salesData = [];
+  var inputs = document.querySelectorAll('.sales-input');
+  var memoInputs = document.querySelectorAll('.td-input:not(.sales-input)');
+  var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+  activeWps.forEach(function(w, i){
+    var name = getNameByKey(w.key) || '';
+    var sale = inputs[i] ? inputs[i].value : '';
+    var memo = memoInputs[i] ? memoInputs[i].value : '';
+    // 移動時間・納品時間を計算
+    var moveMin = '';
+    var delivMin = '';
+    var prevWp = null;
+    for(var pi = activeWps.indexOf(w)-1; pi >= 0; pi--){
+      if(activeWps[pi].key !== null){ prevWp = activeWps[pi]; break; }
+    }
+    if(prevWp && prevWp.depart && w.arrive){
+      moveMin = Math.round((w.arrive - prevWp.depart)/60000)+'分';
+    }
+    if(w.arrive && w.depart && w.arrive < w.depart){
+      delivMin = Math.round((w.depart - w.arrive)/60000)+'分';
+    }
+    salesData.push({
+      name: name,
+      arrive: w.arrive ? fmtTime(w.arrive) : '',
+      depart: w.depart ? fmtTime(w.depart) : '',
+      move: moveMin,
+      delivery: delivMin,
+      temp: w.temp || '',
+      sales: sale,
+      memo: memo
+    });
+  });
+
+  // 送信データ作成
+  var report = {
+    date: dateStr,
+    route: route,
+    car: car,
+    driver: '',
+    salesTotal: salesTotal,
+    count: count,
+    totalTime: totalTime,
+    kmStart: kmStart,
+    kmEnd: kmEnd,
+    kmTotal: kmTotal,
+    memo: memo,
+    truckStatus: truckStatus,
+    savedAt: now.toLocaleString('ja-JP'),
+    waypoints: salesData
+  };
+
+  var fileName = dateStr.replace(/\//g,'-')+'_'+route+'_日報.json';
+  var json = JSON.stringify(report, null, 2);
+  var blob = new Blob([json], {type:'application/json'});
+
+  // クラウドへ自動送信
+  uploadToCloud(report).then(function(success){
+    if(success){
+      showSendDone();
+    }else{
+      alert('クラウド送信に失敗しました。通信を確認してください');
+    }
+  });
+}
+
+// ===== クラウド同期設定（Apps Script中継版・安全） =====
+var RELAY_URL = 'https://script.google.com/macros/s/AKfycbzviYFvU6ntm5790_J2ofTSgdVzmM8dWXASABzITEH0Bz1c9AzD82fFQuRfdKlAHjH3CQ/exec';
+
+async function uploadToCloud(report){
+  try{
+    var res = await fetch(RELAY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ type: 'upload', report: report })
+    });
+    if(!res.ok) return false;
+    var data = await res.json();
+    return data.success === true;
+  }catch(e){
+    return false;
+  }
+}
+
+function downloadJSON(blob, fileName){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+  showSendDone();
+}
+
+function showSendDone(){
+  var btn = document.getElementById('send-btn');
+  if(!btn) return;
+  btn.textContent = '✅ 送信完了！';
+  btn.style.borderColor = '#5cffb0';
+  btn.style.color = '#5cffb0';
+  setTimeout(function(){
+    btn.textContent = '📤 日報を送信';
+    btn.style.borderColor = '#ffd166';
+    btn.style.color = '#ffd166';
+  }, 2500);
+}
+
+function saveSalesManual(){
+  saveReportInputs();
+  var btn = document.getElementById('save-sales-btn');
+  btn.textContent = '✅ 保存しました！';
+  btn.style.borderColor = '#ffd166';
+  btn.style.color = '#ffd166';
+  setTimeout(function(){
+    btn.textContent = '💾 売上を保存';
+    btn.style.borderColor = '#5cffb0';
+    btn.style.color = '#5cffb0';
+  }, 2000);
+}
+
+function printReport(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+  var route = (document.getElementById('report-route')||{}).value || '配送';
+  document.title = dateStr+'_'+route+'_配送報告書';
+
+  // input要素をspanに変換して印刷
+  var inputs = document.querySelectorAll('#report-tbody input, #report-tbody2 input, #report-km-start, #report-km-end');
+  var replaced = [];
+  inputs.forEach(function(input){
+    var span = document.createElement('span');
+    span.textContent = input.value || '';
+    span.style.fontSize = '7pt';
+    span.style.color = '#000';
+    input.parentNode.insertBefore(span, input);
+    input.style.display = 'none';
+    replaced.push({input:input, span:span});
+  });
+
+  window.print();
+
+  // 印刷後に元に戻す
+  setTimeout(function(){
+    replaced.forEach(function(r){
+      r.span.parentNode.removeChild(r.span);
+      r.input.style.display = '';
+    });
+    document.title = '配送';
+  }, 1000);
+}
+
+function copyReport(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+  var route = (document.getElementById('report-route')||{}).value || '';
+  var car = (document.getElementById('report-car')||{}).value || '';
+  var count = (document.getElementById('report-count')||{}).textContent || '0';
+  var totalTime = (document.getElementById('report-total-time')||{}).textContent || '--';
+  var salesTotal = (document.getElementById('report-sales-total')||{}).textContent || '0';
+  var kmStart = (document.getElementById('report-km-start')||{}).value || '';
+  var kmEnd = (document.getElementById('report-km-end')||{}).value || '';
+  var kmTotal = (document.getElementById('report-km-total')||{}).textContent || '--';
+  var memo = (document.getElementById('report-memo')||{}).value || '';
+  var truck = document.querySelector('input[name="truck"]:checked');
+  var truckStatus = truck ? (truck.value === 'good' ? '良' : '不良') : '未選択';
+
+  var tdStyle = 'border:1px solid #000;padding:3px 5px;font-size:9pt;white-space:nowrap;';
+  var thStyle = tdStyle+'background:#ddd;font-weight:bold;text-align:center;';
+
+  var tableRows = '';
+  var trs = document.querySelectorAll('#report-tbody tr');
+  trs.forEach(function(tr){
+    var tds = tr.querySelectorAll('td');
+    if(tds.length < 7) return;
+    var hasContent = false;
+    var cells = '';
+    tds.forEach(function(td){
+      var input = td.querySelector('input');
+      var val = input ? input.value : td.textContent.trim();
+      if(val && val !== '0') hasContent = true;
+      cells += '<td style="'+tdStyle+'">'+escHtml(val)+'</td>';
+    });
+    if(hasContent) tableRows += '<tr>'+cells+'</tr>';
+  });
+
+  var html =
+    '<div style="font-family:sans-serif;font-size:10pt;color:#000;">'+
+    // ヘッダー行：日付・ルート・車番 ＋ ハンコ枠
+    '<table style="border-collapse:collapse;width:100%;margin-bottom:4px;" cellspacing="0" cellpadding="0">'+
+      '<tr>'+
+        '<td style="vertical-align:top;">'+
+          '<table style="border-collapse:collapse;font-size:9pt;" cellspacing="0" cellpadding="0">'+
+            '<tr><td style="padding:2px 6px 2px 0;"><b>日付</b></td><td style="padding:2px 10px 2px 0;">'+dateStr+'</td>'+
+                '<td style="padding:2px 6px 2px 0;"><b>ルート名</b></td><td style="padding:2px 10px 2px 0;">'+escHtml(route)+'</td>'+
+                '<td style="padding:2px 6px 2px 0;"><b>車番</b></td><td>'+escHtml(car)+'</td></tr>'+
+          '</table>'+
+        '</td>'+
+        '<td style="vertical-align:top;text-align:right;">'+
+          '<table style="border-collapse:collapse;font-size:8pt;display:inline-table;" cellspacing="0" cellpadding="0">'+
+            '<tr>'+
+              '<td style="border:1px solid #000;text-align:center;padding:2px 14px;background:#eee;"><b>本人</b></td>'+
+              '<td style="border:1px solid #000;text-align:center;padding:2px 14px;background:#eee;"><b>部長</b></td>'+
+            '</tr>'+
+            '<tr>'+
+              '<td style="border:1px solid #000;width:54px;height:54px;">&nbsp;</td>'+
+              '<td style="border:1px solid #000;width:54px;height:54px;">&nbsp;</td>'+
+            '</tr>'+
+          '</table>'+
+        '</td>'+
+      '</tr>'+
+    '</table>'+
+    // 配送テーブル
+    '<table style="border-collapse:collapse;width:100%;margin-bottom:6px;font-size:8pt;" cellspacing="0" cellpadding="0">'+
+      '<tr>'+
+        '<th style="'+thStyle+'">番号</th>'+
+        '<th style="'+thStyle+'">到着</th>'+
+        '<th style="'+thStyle+'">出発</th>'+
+        '<th style="'+thStyle+'">移動</th>'+
+        '<th style="'+thStyle+'">納品</th>'+
+        '<th style="'+thStyle+'">庫内温度</th>'+
+        '<th style="'+thStyle+'width:auto;">店名</th>'+
+        '<th style="'+thStyle+'">売上</th>'+
+        '<th style="'+thStyle+'">備考</th>'+
+      '</tr>'+
+      tableRows+
+    '</table>'+
+    // フッター：集計 ＋ 台車の状態
+    '<table style="border-collapse:collapse;width:100%;margin-bottom:4px;font-size:9pt;" cellspacing="0" cellpadding="0">'+
+      '<tr>'+
+        '<td style="vertical-align:top;">'+
+          '<table style="border-collapse:collapse;font-size:9pt;" cellspacing="0" cellpadding="0">'+
+            '<tr><td style="padding:2px 8px 2px 0;"><b>売上合計</b></td><td style="padding:2px 14px 2px 0;">'+salesTotal+'円</td>'+
+                '<td style="padding:2px 8px 2px 0;"><b>配送件数</b></td><td style="padding:2px 14px 2px 0;">'+count+'件</td>'+
+                '<td style="padding:2px 8px 2px 0;"><b>所要時間</b></td><td>'+totalTime+'</td></tr>'+
+            '<tr><td style="padding:2px 8px 2px 0;"><b>走行距離</b></td>'+
+                '<td colspan="5">始'+kmStart+'km → 終'+kmEnd+'km（計'+kmTotal+'km）</td></tr>'+
+          '</table>'+
+        '</td>'+
+        '<td style="vertical-align:top;text-align:right;">'+
+          '<table style="border-collapse:collapse;font-size:8pt;display:inline-table;" cellspacing="0" cellpadding="0">'+
+            '<tr><td colspan="2" style="border:1px solid #000;text-align:center;padding:2px 8px;background:#eee;"><b>台車の状態</b></td></tr>'+
+            '<tr>'+
+              '<td style="border:1px solid #000;padding:4px 16px;text-align:center;'+(truckStatus==='良'?'background:#c8ffc8;font-weight:bold;':'')+'">良</td>'+
+              '<td style="border:1px solid #000;padding:4px 16px;text-align:center;'+(truckStatus==='不良'?'background:#ffc8c8;font-weight:bold;':'')+'">不良</td>'+
+            '</tr>'+
+          '</table>'+
+        '</td>'+
+      '</tr>'+
+    '</table>'+
+    // 顧客情報
+    '<table style="border-collapse:collapse;width:100%;font-size:9pt;" cellspacing="0" cellpadding="0">'+
+      '<tr><td style="border:1px solid #999;padding:6px;min-height:40px;">'+
+        '<b>顧客情報・報告内容</b><br>'+
+        escHtml(memo||'なし').replace(/\n/g,'<br>')+
+      '</td></tr>'+
+    '</table>'+
+    '</div>';
+
+  try{
+    var blob = new Blob([html],{type:'text/html'});
+    var item = new ClipboardItem({'text/html':blob});
+    navigator.clipboard.write([item]).then(function(){
+      showCopyDone();
+    }).catch(function(){ fallbackCopy(html); });
+  }catch(e){ fallbackCopy(html); }
+}
+
+function showCopyDone(){
+  var btn = document.getElementById('copy-report-btn');
+  btn.textContent = '✅ コピー完了！';
+  btn.style.borderColor = '#5cffb0';
+  btn.style.color = '#5cffb0';
+  setTimeout(function(){
+    btn.textContent = '📋 A4範囲をコピー';
+    btn.style.borderColor = '#ffd166';
+    btn.style.color = '#ffd166';
+  }, 2500);
+}
+
+function fallbackCopy(html){
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  div.contentEditable = 'true';
+  div.style.cssText = 'position:fixed;top:0;left:0;width:100%;max-height:70vh;overflow:auto;background:#fff;color:#000;padding:10px;z-index:9999;font-size:11px;';
+  document.body.appendChild(div);
+  var range = document.createRange();
+  range.selectNodeContents(div);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  try{ document.execCommand('copy'); showCopyDone(); }catch(e){}
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 閉じる';
+  closeBtn.style.cssText = 'position:fixed;top:5px;right:5px;z-index:10000;padding:8px 16px;background:#ff5c5c;color:#fff;border:none;border-radius:6px;font-size:13px;';
+  closeBtn.onclick = function(){ document.body.removeChild(div); document.body.removeChild(closeBtn); };
+  document.body.appendChild(closeBtn);
+}
+
+function calcKm(){
+  var start = parseFloat(document.getElementById('report-km-start').value);
+  var end = parseFloat(document.getElementById('report-km-end').value);
+  var totalEl = document.getElementById('report-km-total');
+  if(totalEl){
+    totalEl.textContent = (!isNaN(start) && !isNaN(end) && end >= start)
+      ? (end - start).toFixed(1)
+      : '--';
+  }
+  scheduleAutoSaveReport();
+}
+
+function sendGmail(){
+  var now = new Date();
+  var dateStr = now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate();
+  var route = document.getElementById('report-route') ? document.getElementById('report-route').value : '';
+  var car = document.getElementById('report-car') ? document.getElementById('report-car').value : '';
+  var count = document.getElementById('report-count') ? document.getElementById('report-count').textContent : '';
+  var totalTime = document.getElementById('report-total-time') ? document.getElementById('report-total-time').textContent : '';
+  var salesTotal = document.getElementById('report-sales-total') ? document.getElementById('report-sales-total').textContent : '';
+  var kmStart = document.getElementById('report-km-start') ? document.getElementById('report-km-start').value : '';
+  var kmEnd = document.getElementById('report-km-end') ? document.getElementById('report-km-end').value : '';
+  var kmTotal = document.getElementById('report-km-total') ? document.getElementById('report-km-total').textContent : '';
+  var memo = document.getElementById('report-memo') ? document.getElementById('report-memo').value : '';
+  var truck = document.querySelector('input[name="truck"]:checked');
+  var truckStatus = truck ? (truck.value === 'good' ? '良' : '不良') : '未選択';
+
+  // 配送先一覧をテキストで構成
+  var rows = [];
+  var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+  activeWps.forEach(function(w, i){
+    var name = getNameByKey(w.key) || '';
+    var arrive = w.arrive ? fmtTime(w.arrive) : '--';
+    var depart = w.depart ? fmtTime(w.depart) : '--';
+    var temp = w.temp || '--';
+    rows.push((i+1)+'. '+name+' 到着:'+arrive+' 出発:'+depart+' 庫内温度:'+temp+'℃');
+  });
+
+  // 売上一覧
+  var salesRows = [];
+  var inputs = document.querySelectorAll('.sales-input');
+  activeWps.forEach(function(w, i){
+    var name = getNameByKey(w.key) || '';
+    var val = inputs[i] ? inputs[i].value : '';
+    if(val) salesRows.push(name+': '+val+'円');
+  });
+
+  var subject = encodeURIComponent('[配送報告] '+dateStr+' '+route);
+  var body = encodeURIComponent(
+    '【配送報告書】\n'+
+    '日付: '+dateStr+'\n'+
+    'ルート: '+route+'\n'+
+    '車番: '+car+'\n\n'+
+    '【配送記録】\n'+
+    rows.join('\n')+'\n\n'+
+    '【売上】\n'+
+    (salesRows.length > 0 ? salesRows.join('\n') : 'なし')+'\n'+
+    '売上合計: '+salesTotal+'円\n\n'+
+    '【集計】\n'+
+    '配送件数: '+count+'件\n'+
+    '配送所要時間: '+totalTime+'\n'+
+    '走行距離: '+kmStart+'→'+kmEnd+' (計'+kmTotal+'km)\n'+
+    '台車の状態: '+truckStatus+'\n\n'+
+    '【顧客情報・報告内容】\n'+
+    (memo || 'なし')
+  );
+
+  window.open('https://mail.google.com/mail/?view=cm&fs=1&su='+subject+'&body='+body, '_blank');
+}
+
+function calcSalesTotal(){
+  var total = 0;
+  document.querySelectorAll('.sales-input').forEach(function(input){
+    var raw = input.value.trim().replace(/,/g,'').replace(/，/g,'').replace(/\s/g,'');
+    if(raw === '' || raw === '+' || raw === '-') return;
+    try{
+      // +200 や -300 や 200+10-5 など +- と数字のみ許可
+      if(/^[+\-]?[0-9\.]+([+\-][0-9\.]+)*$/.test(raw)){
+        var v = Function('"use strict"; return (' + raw + ')')();
+        if(!isNaN(v) && isFinite(v)) total += v;
+      }
+    }catch(e){}
+  });
+  var el = document.getElementById('report-sales-total');
+  if(el){
+    el.textContent = total.toLocaleString();
+    el.style.color = total < 0 ? '#ff5c5c' : '#5cffb0';
+  }
+}
+
+// 画面を離れた時・バックグラウンド時も自動保存
+document.addEventListener('visibilitychange', function(){
+  saveReportInputs();
+  saveState();
+});
+
+// 報告書テーブルへの入力イベントを監視
+document.addEventListener('input', function(e){
+  if(e.target.classList.contains('sales-input')){
+    calcSalesTotal();
+    saveReportInputs();
+  }
+  if(e.target.id === 'report-memo' || e.target.id === 'report-memo2'){
+    saveReportInputs();
+  }
+  // 報告書に関わる入力があれば集計へ自動保存
+  if(
+    e.target.classList.contains('sales-input') ||
+    e.target.classList.contains('td-input') ||
+    e.target.id === 'report-memo' || e.target.id === 'report-memo2' ||
+    e.target.id === 'report-route' || e.target.id === 'report-car'
+  ){
+    scheduleAutoSaveReport();
+  }
+});
+
+// 台車の状態（ラジオボタン）の変更も自動保存
+document.addEventListener('change', function(e){
+  if(e.target.name === 'truck'){
+    scheduleAutoSaveReport();
+  }
+});
+
+// 売上・備考をIndexedDBに保存（タスク削除しても消えない）
+function saveReportInputs(){
+  try{
+    var data = {};
+    document.querySelectorAll('.sales-input').forEach(function(el, i){ data['sales_'+i] = el.value; });
+    var memo = document.getElementById('report-memo');
+    if(memo) data['memo'] = memo.value;
+    var memo2 = document.getElementById('report-memo2');
+    if(memo2) data['memo2'] = memo2.value;
+    var json = JSON.stringify(data);
+    // IndexedDB（永続）
+    idbSet('report-inputs', json);
+    // window.storage（バックアップ）
+    try{ window.storage.set('report-inputs', json, false); }catch(e){}
+  }catch(e){}
+}
+
+async function loadReportInputs(){
+  var data = null;
+  // IndexedDBから読み込む（優先）
+  try{
+    var val = await idbGet('report-inputs');
+    if(val) data = JSON.parse(val);
+  }catch(e){}
+  // ダメならwindow.storageから
+  if(!data){
+    try{
+      var r = await window.storage.get('report-inputs', false);
+      if(r && r.value) data = JSON.parse(r.value);
+    }catch(e){}
+  }
+  if(!data) return;
+  var inputs = document.querySelectorAll('.sales-input');
+  inputs.forEach(function(el, i){
+    if(data['sales_'+i] !== undefined) el.value = data['sales_'+i];
+  });
+  var memo = document.getElementById('report-memo');
+  if(memo && data['memo']) memo.value = data['memo'];
+  var memo2 = document.getElementById('report-memo2');
+  if(memo2 && data['memo2']) memo2.value = data['memo2'];
+  calcSalesTotal();
+}
+
+// 今日の日付を「YYYY/MM/DD」形式で取得
+function todayDateStr(){
+  var now = new Date();
+  return now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+}
+
+// ===== 状態の自動保存・復元（バックグラウンド対策）=====
+async function saveState(){
+  try{
+    var state = { waypoints: waypoints, activeSlots: activeSlots, savedDate: todayDateStr() };
+    var json = JSON.stringify(state);
+    await idbSet('delivery-state', json);
+    // window.storage（対応環境向けの追加バックアップ。非対応環境では失敗しても無視）
+    try{ await window.storage.set('delivery-state', json, false); }catch(e){}
+  }catch(e){}
+}
+
+async function loadState(){
+  try{
+    var val = await idbGet('delivery-state');
+    // IndexedDBになければwindow.storageから（対応環境のみ）
+    if(!val){
+      try{
+        var r = await window.storage.get('delivery-state', false);
+        if(r && r.value){ val = r.value; await idbSet('delivery-state', val); }
+      }catch(e){}
+    }
+    if(val){
+      var state = JSON.parse(val);
+      if(state.savedDate && state.savedDate !== todayDateStr()){
+        // 日付が変わっているので前日の配送記録を自動クリア（配送先の選択は維持）
+        waypoints = makeEmptyWaypoints();
+        try{ idbSet('report-locked','0'); }catch(e){}
+        try{ window.storage.set('report-locked','0',false); }catch(e){}
+        saveState();
+      } else {
+        if(state.waypoints) waypoints = state.waypoints;
+        if(state.activeSlots) activeSlots = state.activeSlots;
+      }
+    }
+  }catch(e){}
+}
+
+// ===== 初期化 =====
+// ===== 初期化 =====
+// まずUIを先に表示してからデータを読み込む
+renderSlots();
+renderPicker();
+renderWaypoints();
+
+// データ読み込みは非同期で後から
+(async function(){
+  try{ await loadState(); }catch(e){}
+  try{ await loadMonthlyData(); }catch(e){}
+  renderSlots();
+  renderPicker();
+  renderWaypoints();
+})();
+</script>
+</body>
+</html>
