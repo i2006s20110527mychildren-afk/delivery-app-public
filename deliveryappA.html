@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="./manifest-admin.json">
+<meta name="theme-color" content="#0a0e16">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>配送管理</title>
+<style>
+html{overscroll-behavior-y:contain;}
+body{min-height:100vh;background:#0a0e16;font-family:'Hiragino Sans','SF Mono',monospace;color:#e8ecf4;margin:0;padding:0;padding-bottom:20px;}
+
+/* ヘッダー */
+#header{background:#0d1320;border-bottom:1px solid #1a2438;padding:14px 16px;position:sticky;top:0;z-index:100;}
+#header h1{margin:0;font-size:16px;color:#5ee0ff;letter-spacing:3px;}
+#header p{margin:4px 0 0;font-size:10px;color:#3a4a6a;}
+
+/* パスワード画面 */
+#lock-screen{position:fixed;inset:0;background:#0a0e16;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+#lock-box{width:100%;max-width:320px;text-align:center;}
+#lock-box h1{color:#5ee0ff;font-size:16px;letter-spacing:3px;margin-bottom:4px;}
+#lock-box p{color:#3a4a6a;font-size:10px;margin-bottom:28px;}
+#lock-icon{font-size:36px;margin-bottom:16px;}
+#lock-input{width:100%;box-sizing:border-box;padding:14px;background:#101828;border:1px solid #1a2438;color:#e8ecf4;font-size:20px;font-family:inherit;text-align:center;letter-spacing:8px;border-radius:10px;outline:none;margin-bottom:14px;}
+#lock-input:focus{border-color:#5ee0ff;}
+#lock-btn{width:100%;padding:14px;background:transparent;border:2px solid #5ee0ff;color:#5ee0ff;font-size:14px;font-family:inherit;letter-spacing:2px;border-radius:10px;cursor:pointer;}
+#lock-error{color:#ff5c5c;font-size:11px;margin-top:12px;min-height:14px;}
+#app-content{display:none;}
+
+/* メインコンテンツ */
+#main{padding:16px;}
+
+/* 読み込みボタン */
+#load-section{margin-bottom:16px;}
+#load-btn{width:100%;padding:14px;background:transparent;border:2px solid #ffd166;color:#ffd166;font-size:14px;font-family:inherit;letter-spacing:2px;border-radius:10px;cursor:pointer;}
+#load-input{display:none;}
+#cloud-load-btn{width:100%;padding:14px;background:transparent;border:2px solid #5ee0ff;color:#5ee0ff;font-size:14px;font-family:inherit;letter-spacing:2px;border-radius:10px;cursor:pointer;margin-top:8px;}
+#load-status{font-size:11px;color:#5a7a9a;text-align:center;margin-top:8px;min-height:14px;}
+
+/* フィルター */
+#filter-section{display:none;margin-bottom:16px;}
+#filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.filter-select{flex:1;min-width:100px;padding:8px 10px;background:#0d1320;border:1px solid #1a2438;color:#e8ecf4;font-size:12px;font-family:inherit;border-radius:8px;outline:none;}
+#filter-clear{padding:8px 14px;background:transparent;border:1px solid #2a3a55;color:#5a7a9a;font-size:11px;font-family:inherit;border-radius:8px;cursor:pointer;}
+
+/* 集計バー */
+#summary-bar{display:none;background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+#summary-bar .sum-row{display:flex;gap:16px;flex-wrap:wrap;}
+.sum-item{font-size:11px;color:#5a7a9a;}
+.sum-item span{color:#5ee0ff;font-weight:bold;font-size:14px;margin-left:4px;}
+
+/* 日報リスト */
+#report-list{display:none;}
+.report-card{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;}
+.report-card:hover{border-color:#5ee0ff;}
+.rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.rc-date{font-size:14px;color:#e8ecf4;font-weight:bold;}
+.rc-route{font-size:11px;color:#5ee0ff;margin-top:2px;}
+.rc-driver{font-size:11px;color:#5a7a9a;}
+.rc-stats{display:flex;gap:12px;flex-wrap:wrap;}
+.rc-stat{font-size:11px;color:#3a4a6a;}
+.rc-stat span{color:#e8ecf4;}
+.rc-arrow{color:#3a4a6a;font-size:16px;}
+.rc-sales{font-size:16px;color:#5cffb0;font-weight:bold;}
+
+/* 空状態 */
+#empty-state{text-align:center;padding:60px 20px;color:#2a3a55;font-size:13px;display:none;}
+
+/* 詳細画面 */
+#detail-section{display:none;}
+#detail-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+#detail-back{padding:8px 14px;background:transparent;border:1px solid #2a3a55;color:#5ee0ff;font-size:11px;font-family:inherit;border-radius:8px;cursor:pointer;}
+#detail-title{font-size:13px;color:#e8ecf4;}
+#detail-print-btn{padding:8px 12px;background:transparent;border:1px solid #5ee0ff;color:#5ee0ff;font-size:11px;font-family:inherit;border-radius:8px;cursor:pointer;}
+#detail-share-btn{padding:8px 12px;background:transparent;border:1px solid #ffd166;color:#ffd166;font-size:11px;font-family:inherit;border-radius:8px;cursor:pointer;}
+
+/* 詳細情報 */
+#detail-info{background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px;margin-bottom:12px;font-size:11px;}
+.di-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px;}
+.di-label{color:#5a7a9a;}
+.di-val{color:#e8ecf4;}
+
+/* 詳細テーブル */
+#detail-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#detail-table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px;}
+#detail-table th{background:#1a2a45;color:#8aa0c0;padding:6px 4px;border:1px solid rgba(255,255,255,0.2);text-align:center;font-size:10px;white-space:nowrap;}
+#detail-table td{padding:5px 4px;border:1px solid rgba(255,255,255,0.15);color:#e8ecf4;vertical-align:middle;font-size:11px;}
+#detail-table tbody tr:nth-child(even){background:#0d1825;}
+.dt-num{text-align:center;color:#ffd166;font-weight:bold;}
+.dt-time{text-align:center;color:#ff5c5c;white-space:nowrap;}
+.dt-name{color:#fff;}
+.dt-sales{text-align:right;color:#5cffb0;}
+
+/* 印刷 */
+@media print{
+  @page{size:A4 portrait;margin:8mm;}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  html,body{background:#fff !important;color:#000 !important;}
+  #header,#load-section,#filter-section,#summary-bar,#report-list,#empty-state,#detail-back,#detail-print-btn{display:none !important;}
+  #detail-section{display:block !important;}
+  #detail-info{background:#fff !important;border:1px solid #999 !important;color:#000 !important;}
+  .di-label,.di-val{color:#000 !important;}
+  #detail-table{width:100% !important;min-width:0 !important;}
+  #detail-table th{background:#ddd !important;color:#000 !important;border:1px solid #000 !important;}
+  #detail-table td{border:1px solid #000 !important;color:#000 !important;}
+  .dt-num,.dt-time,.dt-name,.dt-sales{color:#000 !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- パスワード画面 -->
+<div id="lock-screen">
+  <div id="lock-box">
+    <div id="lock-icon">🔒</div>
+    <h1>配送管理</h1>
+    <p>ADMIN ACCESS ONLY</p>
+    <input type="tel" id="lock-input" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric">
+    <button id="lock-btn" onclick="checkPassword()">ログイン</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
+
+<div id="app-content">
+<div id="header">
+  <h1>📋 配送管理</h1>
+  <p>DELIVERY MANAGEMENT SYSTEM</p>
+</div>
+
+<div id="main">
+  <!-- 読み込み -->
+  <div id="load-section">
+    <button id="load-btn" onclick="document.getElementById('load-input').click()">📂 日報ファイルを読み込む</button>
+    <input type="file" id="load-input" accept=".json" multiple onchange="loadReports(event)">
+    <button id="cloud-load-btn" onclick="loadFromCloud()">☁️ クラウドから受信</button>
+    <div id="load-status">ドライバーから受け取ったJSONファイルを読み込んでください</div>
+  </div>
+
+  <!-- フィルター -->
+  <div id="filter-section">
+    <div id="filter-row">
+      <select id="filter-date" class="filter-select" onchange="applyFilter()">
+        <option value="">全日付</option>
+      </select>
+      <select id="filter-route" class="filter-select" onchange="applyFilter()">
+        <option value="">全ルート</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 集計バー -->
+  <div id="summary-bar">
+    <div class="sum-row">
+      <div class="sum-item">件数<span id="sum-count">0</span>件</div>
+      <div class="sum-item">売上合計<span id="sum-sales">0</span>円</div>
+      <div class="sum-item">配送数<span id="sum-deliveries">0</span>件</div>
+    </div>
+  </div>
+
+  <!-- 日報リスト -->
+  <div id="report-list"></div>
+  <div id="empty-state">該当する日報がありません</div>
+
+  <!-- 詳細画面 -->
+  <div id="detail-section">
+    <div id="detail-header">
+      <button id="detail-back" onclick="showList()">← 一覧に戻る</button>
+      <span id="detail-title"></span>
+      <div style="display:flex;gap:6px;margin-left:auto;">
+        <button id="detail-print-btn" onclick="window.print()">🖨 印刷／PDF</button>
+        <button id="detail-share-btn" onclick="shareDetail()">📤 送信</button>
+      </div>
+    </div>
+    <div id="detail-info"></div>
+    <div id="detail-table-wrap">
+      <table id="detail-table">
+        <thead>
+          <tr>
+            <th>番号</th><th>到着</th><th>出発</th><th>移動</th><th>納品</th><th>庫内温度</th><th>店名</th><th>売上</th><th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+    </div>
+    <div id="detail-footer"></div>
+  </div>
+</div>
+</div>
+<!-- /app-content -->
+
+<script>
+var ADMIN_PASSWORD = '0141';
+
+function checkPassword(){
+  var input = document.getElementById('lock-input');
+  var error = document.getElementById('lock-error');
+  if(input.value === ADMIN_PASSWORD){
+    sessionStorage.setItem('deliveryappA_auth', '1');
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  }else{
+    error.textContent = 'パスワードが違います';
+    input.value = '';
+    input.focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var input = document.getElementById('lock-input');
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') checkPassword();
+  });
+  // 同じセッション内なら再入力不要
+  if(sessionStorage.getItem('deliveryappA_auth') === '1'){
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  }else{
+    input.focus();
+  }
+});
+
+// ===== クラウド同期設定（Apps Script中継版・安全） =====
+var RELAY_URL = 'https://script.google.com/macros/s/AKfycbzviYFvU6ntm5790_J2ofTSgdVzmM8dWXASABzITEH0Bz1c9AzD82fFQuRfdKlAHjH3CQ/exec';
+
+async function loadFromCloud(){
+  var statusEl = document.getElementById('load-status');
+  statusEl.textContent = 'クラウドから受信中...';
+  try{
+    var res = await fetch(RELAY_URL, { method: 'GET' });
+    if(!res.ok) throw new Error('取得失敗');
+    var parsed = await res.json();
+    var reports = parsed.reports || {};
+    var keys = Object.keys(reports);
+    if(keys.length === 0){
+      statusEl.textContent = 'クラウドにデータがありません';
+      return;
+    }
+    var added = 0;
+    keys.forEach(function(k){
+      var r = reports[k];
+      var idx = allReports.findIndex(function(x){ return x.date===r.date && x.route===r.route && x.driver===r.driver; });
+      if(idx >= 0) allReports[idx] = r;
+      else allReports.push(r);
+      added++;
+    });
+    allReports.sort(function(a,b){ return b.date > a.date ? 1 : -1; });
+    saveAllReportsToDB();
+    updateFilters();
+    applyFilter();
+    statusEl.textContent = 'クラウドから'+added+'件受信しました';
+  }catch(e){
+    statusEl.textContent = '受信エラー：通信を確認してください';
+  }
+}
+
+var allReports = [];
+var filteredReports = [];
+var KEEP_DAYS = 90;
+var DB_NAME = 'deliveryappA-db';
+var DB_STORE = 'reports';
+var db = null;
+
+// IndexedDB初期化
+function openDB(){
+  return new Promise(function(resolve, reject){
+    if(db){ resolve(db); return; }
+    var req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function(e){
+      e.target.result.createObjectStore(DB_STORE, {keyPath:'_key'});
+    };
+    req.onsuccess = function(e){ db = e.target.result; resolve(db); };
+    req.onerror = function(){ reject(); };
+  });
+}
+
+async function saveAllReportsToDB(){
+  try{
+    var d = await openDB();
+    var tx = d.transaction(DB_STORE,'readwrite');
+    var store = tx.objectStore(DB_STORE);
+    store.clear();
+    allReports.forEach(function(r){
+      var key = r.date+'_'+r.route+'_'+(r.driver||'');
+      store.put(Object.assign({}, r, {_key:key, _savedAt:Date.now()}));
+    });
+  }catch(e){}
+}
+
+async function loadAllReportsFromDB(){
+  try{
+    var d = await openDB();
+    var tx = d.transaction(DB_STORE,'readonly');
+    var store = tx.objectStore(DB_STORE);
+    var req = store.getAll();
+    req.onsuccess = function(){
+      var now = Date.now();
+      var cutoff = now - KEEP_DAYS * 24 * 60 * 60 * 1000;
+      var valid = (req.result||[]).filter(function(r){
+        return !r._savedAt || r._savedAt > cutoff;
+      });
+      allReports = valid.map(function(r){
+        var copy = Object.assign({},r);
+        delete copy._key; delete copy._savedAt;
+        return copy;
+      });
+      allReports.sort(function(a,b){ return b.date > a.date ? 1 : -1; });
+      if(allReports.length > 0){
+        updateFilters();
+        applyFilter();
+        document.getElementById('load-status').textContent =
+          '保存済み'+allReports.length+'件（90日間保存）';
+      }
+    };
+  }catch(e){}
+}
+
+// 起動時に自動読み込み
+window.addEventListener('load', function(){ loadAllReportsFromDB(); });
+
+var currentReport = null;
+
+function loadReports(event){
+  var files = Array.from(event.target.files);
+  if(!files.length) return;
+  var loaded = 0;
+  files.forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = JSON.parse(e.target.result);
+        // 重複チェック（同じ日付・ルートは上書き）
+        var idx = allReports.findIndex(function(r){ return r.date===data.date && r.route===data.route && r.driver===data.driver; });
+        if(idx >= 0) allReports[idx] = data;
+        else allReports.push(data);
+      }catch(err){}
+      loaded++;
+      if(loaded === files.length){
+        allReports.sort(function(a,b){ return b.date > a.date ? 1 : -1; });
+        saveAllReportsToDB(); // IndexedDBに自動保存
+        updateFilters();
+        applyFilter();
+        document.getElementById('load-status').textContent =
+          '合計'+allReports.length+'件の日報を読み込みました（90日間保存）';
+      }
+    };
+    reader.readAsText(file);
+  });
+  event.target.value = '';
+}
+
+function updateFilters(){
+  var dates = [...new Set(allReports.map(function(r){ return r.date; }))].sort().reverse();
+  var routes = [...new Set(allReports.map(function(r){ return r.route; }))].sort();
+  var dateSelect = document.getElementById('filter-date');
+  var routeSelect = document.getElementById('filter-route');
+  dateSelect.innerHTML = '<option value="">全日付</option>' + dates.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  routeSelect.innerHTML = '<option value="">全ルート</option>' + routes.map(function(r){ return '<option value="'+r+'">'+r+'</option>'; }).join('');
+  document.getElementById('filter-section').style.display = 'block';
+  document.getElementById('summary-bar').style.display = 'block';
+  document.getElementById('report-list').style.display = 'block';
+}
+
+function applyFilter(){
+  var date = document.getElementById('filter-date').value;
+  var route = document.getElementById('filter-route').value;
+  filteredReports = allReports.filter(function(r){
+    return (!date || r.date === date) && (!route || r.route === route);
+  });
+  renderList();
+}
+
+function clearFilter(){
+  document.getElementById('filter-date').value = '';
+  document.getElementById('filter-route').value = '';
+  applyFilter();
+}
+
+function renderList(){
+  var list = document.getElementById('report-list');
+  var empty = document.getElementById('empty-state');
+  var sumCount = document.getElementById('sum-count');
+  var sumSales = document.getElementById('sum-sales');
+  var sumDeliveries = document.getElementById('sum-deliveries');
+
+  // 集計
+  var totalSales = 0;
+  var totalDeliveries = 0;
+  filteredReports.forEach(function(r){
+    var s = parseFloat((r.salesTotal||'0').replace(/,/g,''));
+    if(!isNaN(s)) totalSales += s;
+    totalDeliveries += parseInt(r.count||0);
+  });
+  sumCount.textContent = filteredReports.length;
+  sumSales.textContent = totalSales.toLocaleString();
+  sumDeliveries.textContent = totalDeliveries;
+
+  if(filteredReports.length === 0){
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = filteredReports.map(function(r, i){
+    return '<div class="report-card" onclick="showDetail('+i+')">'+
+      '<div class="rc-header">'+
+        '<div>'+
+          '<div class="rc-date">'+r.date+'</div>'+
+          '<div class="rc-route">'+r.route+'</div>'+
+        '</div>'+
+        '<div class="rc-arrow">›</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function showDetail(i){
+  var r = filteredReports[i];
+  if(!r) return;
+  currentReport = r;
+
+  document.getElementById('report-list').style.display = 'none';
+  document.getElementById('filter-section').style.display = 'none';
+  document.getElementById('summary-bar').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('detail-section').style.display = 'block';
+
+  document.getElementById('detail-title').textContent = r.date+'　'+r.route;
+
+  // 報告書形式で詳細を表示
+  document.getElementById('detail-info').innerHTML =
+    // ヘッダー（日付・ルート・ハンコ枠）
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:6px;font-size:10pt;">'+
+      '<tr>'+
+        '<td style="vertical-align:top;padding:4px;">'+
+          '<div style="font-size:10pt;margin-bottom:4px;">'+
+            '<span style="color:#8aa0c0;font-size:8pt;">日付</span> '+
+            '<span style="color:#e8ecf4;">'+r.date+'</span>'+
+          '</div>'+
+          '<div style="font-size:10pt;margin-bottom:4px;">'+
+            '<span style="color:#8aa0c0;font-size:8pt;">ルート名</span> '+
+            '<span style="color:#e8ecf4;">'+escHtml(r.route)+'</span>'+
+          '</div>'+
+          '<div style="font-size:10pt;">'+
+            '<span style="color:#8aa0c0;font-size:8pt;">車番</span> '+
+            '<span style="color:#e8ecf4;">'+escHtml(r.car||'')+'</span>'+
+          '</div>'+
+        '</td>'+
+        '<td style="vertical-align:top;text-align:right;padding:4px;">'+
+          '<table style="border-collapse:collapse;display:inline-table;">'+
+            '<tr>'+
+              '<td style="border:1px solid #3a4a6a;text-align:center;padding:2px 10px;background:#1a2a45;color:#8aa0c0;font-size:8pt;">本人</td>'+
+              '<td style="border:1px solid #3a4a6a;text-align:center;padding:2px 10px;background:#1a2a45;color:#8aa0c0;font-size:8pt;">部長</td>'+
+            '</tr>'+
+            '<tr>'+
+              '<td style="border:1px solid #3a4a6a;width:60px;height:60px;background:#0d1320;"></td>'+
+              '<td style="border:1px solid #3a4a6a;width:60px;height:60px;background:#0d1320;"></td>'+
+            '</tr>'+
+          '</table>'+
+        '</td>'+
+      '</tr>'+
+    '</table>';
+
+  // 配送テーブル
+  var tbody = document.getElementById('detail-tbody');
+  if(!r.waypoints || r.waypoints.length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#3a4a6a;">データなし</td></tr>';
+  } else {
+    tbody.innerHTML = r.waypoints.map(function(w, i){
+      var isFinal = w.name === '会社帰宅';
+      var isFirst = w.name === '会社出発';
+      var numLabel = isFirst ? '出' : (isFinal ? '着' : String(i));
+      return '<tr>'+
+        '<td class="dt-num">'+numLabel+'</td>'+
+        '<td class="dt-time">'+(w.arrive||'—')+'</td>'+
+        '<td class="dt-time">'+(w.depart||'—')+'</td>'+
+        '<td class="dt-time">'+(w.move||'—')+'</td>'+
+        '<td class="dt-time">'+(w.delivery||'—')+'</td>'+
+        '<td class="dt-time">'+(w.temp||'—')+'</td>'+
+        '<td class="dt-name">'+escHtml(w.name)+'</td>'+
+        '<td class="dt-sales">'+(w.sales||'')+'</td>'+
+        '<td class="dt-name">'+(w.memo||'')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  // フッター（集計）
+  var footer = document.getElementById('detail-footer');
+  if(footer){
+    footer.innerHTML =
+      '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-top:6px;">'+
+        '<tr>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">売上合計</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#5cffb0;font-weight:bold;" colspan="3">'+escHtml(r.salesTotal)+'円</td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">配送件数</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#e8ecf4;">'+r.count+'件</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">所要時間</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#e8ecf4;">'+r.totalTime+'</td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">走行距離</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#e8ecf4;" colspan="3">始'+escHtml(r.kmStart||'')+'km → 終'+escHtml(r.kmEnd||'')+'km（計'+escHtml(r.kmTotal||'')+'km）</td>'+
+        '</tr>'+
+        '<tr>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">台車の状態</td>'+
+          '<td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#e8ecf4;" colspan="3">'+escHtml(r.truckStatus||'')+'</td>'+
+        '</tr>'+
+        (r.memo ? '<tr><td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#8aa0c0;font-size:8pt;">顧客情報</td><td style="border:1px solid rgba(255,255,255,0.2);padding:4px 6px;color:#e8ecf4;" colspan="3">'+escHtml(r.memo)+'</td></tr>' : '')+
+      '</table>';
+  }
+}
+
+function showList(){
+  document.getElementById('detail-section').style.display = 'none';
+  document.getElementById('report-list').style.display = 'block';
+  document.getElementById('filter-section').style.display = 'block';
+  document.getElementById('summary-bar').style.display = 'block';
+}
+
+function shareDetail(){
+  // 現在表示中の日報をJSONで共有
+  var r = currentReport;
+  if(!r) return;
+  var fileName = r.date.replace(/\//g,'-')+'_'+r.route+'_日報.json';
+  var blob = new Blob([JSON.stringify(r, null, 2)], {type:'application/json'});
+  if(navigator.share && navigator.canShare){
+    var file = new File([blob], fileName, {type:'application/json'});
+    if(navigator.canShare({files:[file]})){
+      navigator.share({
+        title: '[日報] '+r.date+' '+r.route,
+        text: '配送日報　'+r.date+' '+r.route,
+        files: [file]
+      }).catch(function(){
+        downloadFile(blob, fileName);
+      });
+      return;
+    }
+  }
+  downloadFile(blob, fileName);
+}
+
+function downloadFile(blob, fileName){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
