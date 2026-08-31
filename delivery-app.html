@@ -1930,13 +1930,14 @@ function sendReport(){
 
 // ===== クラウド同期設定（Apps Script中継版・安全） =====
 var RELAY_URL = 'https://script.google.com/macros/s/AKfycbzviYFvU6ntm5790_J2ofTSgdVzmM8dWXASABzITEH0Bz1c9AzD82fFQuRfdKlAHjH3CQ/exec';
+var RELAY_TOKEN = 'dhwKsTnOcy8Y5cFMgnWg';
 
 async function uploadToCloud(report){
   try{
     var res = await fetch(RELAY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'upload', report: report })
+      body: JSON.stringify({ type: 'upload', token: RELAY_TOKEN, report: report })
     });
     if(!res.ok) return false;
     var data = await res.json();
@@ -2292,6 +2293,12 @@ function saveReportInputs(){
     if(memo) data['memo'] = memo.value;
     var memo2 = document.getElementById('report-memo2');
     if(memo2) data['memo2'] = memo2.value;
+    var car = document.getElementById('report-car');
+    if(car) data['car'] = car.value;
+    var kmStart = document.getElementById('report-km-start');
+    if(kmStart) data['kmStart'] = kmStart.value;
+    var kmEnd = document.getElementById('report-km-end');
+    if(kmEnd) data['kmEnd'] = kmEnd.value;
     var json = JSON.stringify(data);
     // IndexedDB（永続）
     idbSet('report-inputs', json);
@@ -2323,7 +2330,15 @@ async function loadReportInputs(){
   if(memo && data['memo']) memo.value = data['memo'];
   var memo2 = document.getElementById('report-memo2');
   if(memo2 && data['memo2']) memo2.value = data['memo2'];
+  var car = document.getElementById('report-car');
+  if(car && data['car']) car.value = data['car'];
+  var kmStart = document.getElementById('report-km-start');
+  if(kmStart && data['kmStart']) kmStart.value = data['kmStart'];
+  var kmEnd = document.getElementById('report-km-end');
+  if(kmEnd && data['kmEnd']) kmEnd.value = data['kmEnd'];
   calcSalesTotal();
+  if(typeof calcKm === 'function') calcKm();
+  if(document.getElementById('report-car2') && car) document.getElementById('report-car2').textContent = car.value || '';
 }
 
 // 今日の日付を「YYYY/MM/DD」形式で取得
