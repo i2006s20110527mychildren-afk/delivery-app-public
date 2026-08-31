@@ -889,9 +889,10 @@ function updateTourStatus(){
 }
 
 function resetTour(){
-  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）')) return;
+  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）\n※報告書の入力内容（売上・車輌No・走行距離）もクリアされます')) return;
   waypoints = makeEmptyWaypoints();
   saveState();
+  clearReportInputs();
   // レポートのロックを解除
   unlockReportSilent();
   renderPicker();
@@ -2285,6 +2286,29 @@ document.addEventListener('change', function(e){
 });
 
 // 売上・備考をIndexedDBに保存（タスク削除しても消えない）
+// 報告書の入力値（売上・車輌No・走行距離・メモ等）をクリアする
+function clearReportInputs(){
+  try{
+    document.querySelectorAll('.sales-input').forEach(function(el){ el.value=''; });
+    var memo = document.getElementById('report-memo');
+    if(memo) memo.value = '';
+    var memo2 = document.getElementById('report-memo2');
+    if(memo2) memo2.value = '';
+    var car = document.getElementById('report-car');
+    if(car) car.value = '';
+    var kmStart = document.getElementById('report-km-start');
+    if(kmStart) kmStart.value = '';
+    var kmEnd = document.getElementById('report-km-end');
+    if(kmEnd) kmEnd.value = '';
+    var car2 = document.getElementById('report-car2');
+    if(car2) car2.textContent = '';
+    if(typeof calcSalesTotal === 'function') calcSalesTotal();
+    if(typeof calcKm === 'function') calcKm();
+  }catch(e){}
+  try{ idbSet('report-inputs', JSON.stringify({})); }catch(e){}
+  try{ window.storage.set('report-inputs', JSON.stringify({}), false); }catch(e){}
+}
+
 function saveReportInputs(){
   try{
     var data = {};
@@ -2375,6 +2399,7 @@ async function loadState(){
         waypoints = makeEmptyWaypoints();
         try{ idbSet('report-locked','0'); }catch(e){}
         try{ window.storage.set('report-locked','0',false); }catch(e){}
+        clearReportInputs();
         saveState();
       } else {
         if(state.waypoints) waypoints = state.waypoints;
