@@ -103,7 +103,11 @@ h1.ptitle{font-size:14px;letter-spacing:5px;color:#3a4a6a;margin-bottom:16px;tex
 .stats-summary-item{flex:1;background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px 8px;text-align:center;}
 .stats-summary-label{display:block;font-size:10px;color:#8aa0c0;letter-spacing:1px;margin-bottom:6px;}
 .stats-summary-val{font-size:19px;color:#5cffb0;font-weight:bold;}
-.stats-month-head{font-size:11px;color:#8aa0c0;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #1a2438;display:flex;justify-content:space-between;}
+.stats-month-head{font-size:11px;color:#8aa0c0;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #1a2438;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;}
+.stats-month-head:active,.stats-month-head:hover{color:#5ee0ff;}
+.stats-month-head .stats-month-arrow{display:inline-block;margin-right:6px;transition:transform 0.15s;font-size:9px;}
+.stats-month-group.collapsed .stats-month-arrow{transform:rotate(-90deg);}
+.stats-month-group.collapsed .stats-month-body{display:none;}
 .stats-item{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:#101828;border:1px solid #1a2438;border-radius:8px;margin-bottom:6px;cursor:pointer;}
 .stats-item:active,.stats-item:hover{border-color:#5ee0ff;}
 .stats-item-left{display:flex;flex-direction:column;gap:3px;}
@@ -1459,12 +1463,17 @@ function renderStatsList(){
 
   var html = '';
   var lastYm = '';
+  var curYm = ymNow; // 現在の月はデフォルトで開いておく
   sorted.forEach(function(r){
     var ym = (r.date||'').slice(0,7);
     if(ym !== lastYm){
+      if(lastYm !== '') html += '</div></div>'; // 直前の月グループを閉じる
       var ymRecords = sorted.filter(function(rr){ return (rr.date||'').slice(0,7) === ym; });
       var ymTotal = ymRecords.reduce(function(sum, rr){ return sum + (rr.salesTotal||0); }, 0);
-      html += '<div class="stats-month-head"><span>'+ym.replace('/','年')+'月</span><span>合計 '+ymTotal.toLocaleString()+'円　('+ymRecords.length+'日)</span></div>';
+      var isExpanded = (expandedMonths[ym] !== undefined) ? expandedMonths[ym] : (ym === curYm);
+      html += '<div class="stats-month-group'+(isExpanded ? '' : ' collapsed')+'" data-ym="'+ym+'">'+
+        '<div class="stats-month-head"><span><span class="stats-month-arrow">▼</span>'+ym.replace('/','年')+'月</span><span>合計 '+ymTotal.toLocaleString()+'円　('+ymRecords.length+'日)</span></div>'+
+        '<div class="stats-month-body">';
       lastYm = ym;
     }
     html += '<div class="stats-item" data-record-id="'+escHtml(r.id)+'">'+
@@ -1472,11 +1481,26 @@ function renderStatsList(){
       '<span class="stats-item-sales">'+((r.salesTotal||0).toLocaleString())+'円</span>'+
     '</div>';
   });
+  if(lastYm !== '') html += '</div></div>'; // 最後の月グループを閉じる
   listEl.innerHTML = html;
 }
 
+// 開いている月を記憶（デフォルトは今月のみ開く）
+var expandedMonths = {};
+
 // リスト項目のクリックをイベント委譲で処理（idベースなので並び替え・削除があってもズレない）
 document.getElementById('stats-list').addEventListener('click', function(e){
+  var head = e.target.closest('.stats-month-head');
+  if(head){
+    var group = head.closest('.stats-month-group');
+    if(group){
+      var ym = group.dataset.ym;
+      var willExpand = group.classList.contains('collapsed');
+      group.classList.toggle('collapsed');
+      expandedMonths[ym] = willExpand;
+    }
+    return;
+  }
   var item = e.target.closest('.stats-item');
   if(item && item.dataset.recordId){ showStatsDetail(item.dataset.recordId); }
 });
