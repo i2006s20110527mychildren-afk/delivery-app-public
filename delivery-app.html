@@ -2291,6 +2291,10 @@ document.addEventListener('input', function(e){
   if(e.target.id === 'report-memo' || e.target.id === 'report-memo2'){
     saveReportInputs();
   }
+  if(e.target.id === 'report-car' || e.target.id === 'report-km-start' || e.target.id === 'report-km-end'){
+    if(typeof calcKm === 'function') calcKm();
+    saveReportInputs();
+  }
   // 報告書に関わる入力があれば集計へ自動保存
   if(
     e.target.classList.contains('sales-input') ||
@@ -2329,6 +2333,7 @@ function clearReportInputs(){
     if(typeof calcSalesTotal === 'function') calcSalesTotal();
     if(typeof calcKm === 'function') calcKm();
   }catch(e){}
+  try{ localStorage.removeItem('report-inputs'); }catch(e){}
   try{ idbSet('report-inputs', JSON.stringify({})); }catch(e){}
   try{ window.storage.set('report-inputs', JSON.stringify({}), false); }catch(e){}
 }
@@ -2348,7 +2353,9 @@ function saveReportInputs(){
     var kmEnd = document.getElementById('report-km-end');
     if(kmEnd) data['kmEnd'] = kmEnd.value;
     var json = JSON.stringify(data);
-    // IndexedDB（永続）
+    // localStorage（同期・即完了・バックヤードから消されても確実に残る）
+    try{ localStorage.setItem('report-inputs', json); }catch(e){}
+    // IndexedDB（永続・非同期）
     idbSet('report-inputs', json);
     // window.storage（バックアップ）
     try{ window.storage.set('report-inputs', json, false); }catch(e){}
@@ -2357,12 +2364,19 @@ function saveReportInputs(){
 
 async function loadReportInputs(){
   var data = null;
-  // IndexedDBから読み込む（優先）
+  // localStorageから読み込む（同期・最速・最優先）
   try{
-    var val = await idbGet('report-inputs');
-    if(val) data = JSON.parse(val);
+    var ls = localStorage.getItem('report-inputs');
+    if(ls) data = JSON.parse(ls);
   }catch(e){}
-  // ダメならwindow.storageから
+  // なければIndexedDBから読み込む
+  if(!data){
+    try{
+      var val = await idbGet('report-inputs');
+      if(val) data = JSON.parse(val);
+    }catch(e){}
+  }
+  // それでもダメならwindow.storageから
   if(!data){
     try{
       var r = await window.storage.get('report-inputs', false);
