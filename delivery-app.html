@@ -2414,6 +2414,8 @@ async function saveState(){
   try{
     var state = { waypoints: waypoints, activeSlots: activeSlots, savedDate: todayDateStr() };
     var json = JSON.stringify(state);
+    // localStorage（同期・即完了・バックヤードから消されても確実に残る）
+    try{ localStorage.setItem('delivery-state', json); }catch(e){}
     await idbSet('delivery-state', json);
     // window.storage（対応環境向けの追加バックアップ。非対応環境では失敗しても無視）
     try{ await window.storage.set('delivery-state', json, false); }catch(e){}
@@ -2422,7 +2424,10 @@ async function saveState(){
 
 async function loadState(){
   try{
-    var val = await idbGet('delivery-state');
+    var val = null;
+    // localStorageから読み込む（同期・最速・最優先＝日付判定の誤りを防ぐ）
+    try{ val = localStorage.getItem('delivery-state'); }catch(e){}
+    if(!val) val = await idbGet('delivery-state');
     // IndexedDBになければwindow.storageから（対応環境のみ）
     if(!val){
       try{
@@ -2458,6 +2463,7 @@ renderWaypoints();
 (async function(){
   try{ await loadState(); }catch(e){}
   try{ await loadMonthlyData(); }catch(e){}
+  try{ await loadReportInputs(); }catch(e){}
   renderSlots();
   renderPicker();
   renderWaypoints();
