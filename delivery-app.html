@@ -2344,8 +2344,12 @@ function clearReportInputs(){
 
 function saveReportInputs(){
   try{
+    var salesEls = document.querySelectorAll('.sales-input');
+    // 報告書テーブルがまだ描画されていない（切替直後などで0件の）場合は
+    // 保存済みの売上データを空データで上書きしてしまうため、ここでは何もしない
+    if(salesEls.length === 0) return;
     var data = {};
-    document.querySelectorAll('.sales-input').forEach(function(el, i){ data['sales_'+i] = el.value; });
+    salesEls.forEach(function(el, i){ data['sales_'+i] = el.value; });
     var memo = document.getElementById('report-memo');
     if(memo) data['memo'] = memo.value;
     var memo2 = document.getElementById('report-memo2');
