@@ -2330,6 +2330,10 @@ function clearReportInputs(){
     if(kmEnd) kmEnd.value = '';
     var car2 = document.getElementById('report-car2');
     if(car2) car2.textContent = '';
+    var route = document.getElementById('report-route');
+    if(route) route.value = '';
+    var route2 = document.getElementById('report-route2');
+    if(route2) route2.textContent = '';
     if(typeof calcSalesTotal === 'function') calcSalesTotal();
     if(typeof calcKm === 'function') calcKm();
   }catch(e){}
@@ -2352,6 +2356,8 @@ function saveReportInputs(){
     if(kmStart) data['kmStart'] = kmStart.value;
     var kmEnd = document.getElementById('report-km-end');
     if(kmEnd) data['kmEnd'] = kmEnd.value;
+    var route = document.getElementById('report-route');
+    if(route) data['route'] = route.value;
     var json = JSON.stringify(data);
     // localStorage（同期・即完了・バックヤードから消されても確実に残る）
     try{ localStorage.setItem('report-inputs', json); }catch(e){}
@@ -2398,6 +2404,10 @@ async function loadReportInputs(){
   if(kmStart && data['kmStart']) kmStart.value = data['kmStart'];
   var kmEnd = document.getElementById('report-km-end');
   if(kmEnd && data['kmEnd']) kmEnd.value = data['kmEnd'];
+  var route = document.getElementById('report-route');
+  if(route && data['route']) route.value = data['route'];
+  var route2 = document.getElementById('report-route2');
+  if(route2 && route) route2.textContent = route.value || '';
   calcSalesTotal();
   if(typeof calcKm === 'function') calcKm();
   if(document.getElementById('report-car2') && car) document.getElementById('report-car2').textContent = car.value || '';
@@ -2463,10 +2473,12 @@ renderWaypoints();
 (async function(){
   try{ await loadState(); }catch(e){}
   try{ await loadMonthlyData(); }catch(e){}
-  try{ await loadReportInputs(); }catch(e){}
+  // 保存内容の反映で必要な一覧の再描画を先に済ませてから、入力値を復元する
+  // （この順番を逆にすると、復元直後の再描画で売上・ルート名が消える）
   renderSlots();
   renderPicker();
   renderWaypoints();
+  try{ await loadReportInputs(); }catch(e){}
 })();
 </script>
 </body>
