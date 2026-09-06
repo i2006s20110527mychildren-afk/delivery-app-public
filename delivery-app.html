@@ -895,10 +895,12 @@ function updateTourStatus(){
 function resetTour(){
   if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）\n※報告書の入力内容（売上・車輌No・走行距離）もクリアされます')) return;
   waypoints = makeEmptyWaypoints();
+  activeSlots = [];
   saveState();
   clearReportInputs();
   // レポートのロックを解除
   unlockReportSilent();
+  renderSlots();
   renderPicker();
   renderWaypoints();
 }
