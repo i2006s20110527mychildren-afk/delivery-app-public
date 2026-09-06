@@ -2336,6 +2336,8 @@ function clearReportInputs(){
     if(route) route.value = '';
     var route2 = document.getElementById('report-route2');
     if(route2) route2.textContent = '';
+    // 台車の状態（ラジオボタン）も選択解除
+    document.querySelectorAll('input[name="truck"]').forEach(function(el){ el.checked = false; });
     if(typeof calcSalesTotal === 'function') calcSalesTotal();
     if(typeof calcKm === 'function') calcKm();
   }catch(e){}
