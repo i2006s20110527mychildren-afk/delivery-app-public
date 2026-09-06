@@ -2311,6 +2311,7 @@ document.addEventListener('input', function(e){
 // 台車の状態（ラジオボタン）の変更も自動保存
 document.addEventListener('change', function(e){
   if(e.target.name === 'truck'){
+    saveReportInputs();
     scheduleAutoSaveReport();
   }
 });
