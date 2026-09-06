@@ -2336,7 +2336,7 @@ function clearReportInputs(){
     if(route) route.value = '';
     var route2 = document.getElementById('report-route2');
     if(route2) route2.textContent = '';
-    // 台車の状態（ラジオボタン）も選択解除
+    // 台車の状態（ラジオボタン）も選択解除（日付変更時・記録リセット時のみ）
     document.querySelectorAll('input[name="truck"]').forEach(function(el){ el.checked = false; });
     if(typeof calcSalesTotal === 'function') calcSalesTotal();
     if(typeof calcKm === 'function') calcKm();
@@ -2366,6 +2366,8 @@ function saveReportInputs(){
     if(kmEnd) data['kmEnd'] = kmEnd.value;
     var route = document.getElementById('report-route');
     if(route) data['route'] = route.value;
+    var truckEl = document.querySelector('input[name="truck"]:checked');
+    if(truckEl) data['truck'] = truckEl.value;
     var json = JSON.stringify(data);
     // localStorage（同期・即完了・バックヤードから消されても確実に残る）
     try{ localStorage.setItem('report-inputs', json); }catch(e){}
@@ -2414,6 +2416,10 @@ async function loadReportInputs(){
   if(kmEnd && data['kmEnd']) kmEnd.value = data['kmEnd'];
   var route = document.getElementById('report-route');
   if(route && data['route']) route.value = data['route'];
+  if(data['truck']){
+    var truckEl = document.querySelector('input[name="truck"][value="'+data['truck']+'"]');
+    if(truckEl) truckEl.checked = true;
+  }
   var route2 = document.getElementById('report-route2');
   if(route2 && route) route2.textContent = route.value || '';
   calcSalesTotal();
