@@ -49,6 +49,9 @@
   #instructionPanel.show{display:block;}
   #instrIcon{font-size:28px; margin-right:10px;}
   #instrRow{display:flex; align-items:center;}
+  #muteBtn{
+    background:none; border:none; font-size:24px; padding:6px 8px; margin-left:8px;
+  }
   #instrText{font-size:18px; font-weight:bold; flex:1;}
   #instrDist{font-size:14px; color:var(--sub); margin-top:2px;}
 
@@ -101,6 +104,7 @@
         <div id="instrText">出発地を取得中...</div>
         <div id="instrDist"></div>
       </div>
+      <button id="muteBtn" title="音声のオン・オフ">🔊</button>
     </div>
   </div>
 
@@ -224,57 +228,61 @@
     fetchRoute(currentPos.lat, currentPos.lng, lat, lng);
   }
 
-  // ---------- 最寄り道路へのスナップ(OSRM nearest) ----------
-  function snapToRoad(lat, lng){
-    const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`;
+  // ---------- 最寄り道路への複数候補取得(OSRM nearest) ----------
+  // 出発地・目的地の周辺(私道・駐車場含む)にある複数の候補道路を取得し、
+  // 実際にルートが引ける組み合わせが見つかるまで順番に試す
+  function nearbyCandidates(lat, lng){
+    const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=6&radiuses=20000`;
     return fetch(url)
       .then(r=>r.json())
       .then(data=>{
         if(data.code === 'Ok' && data.waypoints && data.waypoints.length){
-          const loc = data.waypoints[0].location; // [lng, lat]
-          return {lat: loc[1], lng: loc[0]};
+          return data.waypoints.map(w=>({lat: w.location[1], lng: w.location[0]}));
         }
-        return {lat, lng};
+        return [{lat, lng}];
       })
-      .catch(()=>({lat, lng}));
+      .catch(()=>[{lat, lng}]);
+  }
+
+  function tryRouteOnce(fromLat, fromLng, toLat, toLng){
+    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson&steps=true&language=ja`;
+    return fetch(url).then(r=>r.json());
   }
 
   // ---------- ルート取得(OSRM) ----------
+  // 出発地・目的地それぞれについて、周辺(施設の駐車場や敷地含む約50m〜数百m圏内)
+  // の候補道路を複数取得し、実際に経路がつながる組み合わせを順番に探す
   function fetchRoute(fromLat, fromLng, toLat, toLng){
     setStatus('ルート計算中...');
-    // 出発地・目的地それぞれを最寄りの道路にスナップしてからルート計算する
     Promise.all([
-      snapToRoad(fromLat, fromLng),
-      snapToRoad(toLat, toLng)
-    ]).then(([from, to])=>{
-      requestRoute(from.lat, from.lng, to.lat, to.lng, fromLat, fromLng, toLat, toLng);
+      nearbyCandidates(fromLat, fromLng),
+      nearbyCandidates(toLat, toLng)
+    ]).then(([fromList, toList])=>{
+      tryAllCombinations(fromList, toList, 0, 0);
     });
   }
 
-  function requestRoute(fromLat, fromLng, toLat, toLng, origFromLat, origFromLng, origToLat, origToLng){
-    // radiusesで広めの検索半径を指定し、多少ズレていてもマッチしやすくする
-    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson&steps=true&language=ja&radiuses=2000;2000`;
-    fetch(url)
-      .then(r=>r.json())
-      .then(data=>{
-        if(data.code !== 'Ok' || !data.routes || !data.routes.length){
-          // スナップ後もダメなら、元の座標でも一度だけ試す
-          const fallbackUrl = `https://router.project-osrm.org/route/v1/driving/${origFromLng},${origFromLat};${origToLng},${origToLat}?overview=full&geometries=geojson&steps=true&language=ja`;
-          fetch(fallbackUrl)
-            .then(r2=>r2.json())
-            .then(data2=>{
-              if(data2.code !== 'Ok' || !data2.routes || !data2.routes.length){
-                setStatus('ルートが見つかりませんでした(道路データ上に近い道が見つかりません)', true);
-                return;
-              }
-              renderRoute(data2.routes[0]);
-            })
-            .catch(()=>{ setStatus('ルートが見つかりませんでした', true); });
-          return;
-        }
+  function tryAllCombinations(fromList, toList, fi, ti){
+    if(fi >= fromList.length){
+      setStatus('ルートが見つかりませんでした(周辺の道路データが不足しています)', true);
+      return;
+    }
+    if(ti >= toList.length){
+      // この出発候補では見つからなかったので、次の出発候補へ
+      tryAllCombinations(fromList, toList, fi + 1, 0);
+      return;
+    }
+    const from = fromList[fi];
+    const to = toList[ti];
+    tryRouteOnce(from.lat, from.lng, to.lat, to.lng).then(data=>{
+      if(data.code === 'Ok' && data.routes && data.routes.length){
         renderRoute(data.routes[0]);
-      })
-      .catch(()=>{ setStatus('ルート取得に失敗しました。通信環境を確認してください。', true); });
+      } else {
+        tryAllCombinations(fromList, toList, fi, ti + 1);
+      }
+    }).catch(()=>{
+      tryAllCombinations(fromList, toList, fi, ti + 1);
+    });
   }
 
   function renderRoute(route){
@@ -336,6 +344,28 @@
     return name ? `${name}方面へ${dir}` : dir;
   }
 
+  // ---------- 音声案内 ----------
+  let voiceMuted = false;
+  let lastSpokenStep = -1;
+  let nearAnnounced = false;
+
+  function speak(text){
+    if(voiceMuted || !window.speechSynthesis) return;
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      u.rate = 1.0;
+      window.speechSynthesis.speak(u);
+    }catch(e){ /* 音声合成非対応の端末は無視 */ }
+  }
+
+  el('muteBtn').addEventListener('click', ()=>{
+    voiceMuted = !voiceMuted;
+    el('muteBtn').textContent = voiceMuted ? '🔇' : '🔊';
+    if(voiceMuted && window.speechSynthesis) window.speechSynthesis.cancel();
+  });
+
   function renderStep(i){
     if(i >= routeSteps.length) return;
     const step = routeSteps[i];
@@ -344,6 +374,15 @@
     el('instrDist').textContent = step.distance >= 1000
       ? (step.distance/1000).toFixed(1) + ' km 先'
       : Math.round(step.distance) + ' m 先';
+
+    if(lastSpokenStep !== i){
+      lastSpokenStep = i;
+      nearAnnounced = false;
+      const distText = step.distance >= 1000
+        ? (step.distance/1000).toFixed(1) + 'キロ先'
+        : Math.round(step.distance) + 'メートル先';
+      speak(`${distText}、${stepText(step)}`);
+    }
   }
 
   function haversine(lat1,lng1,lat2,lng2){
@@ -364,6 +403,11 @@
       ? (dist/1000).toFixed(1) + ' km 先'
       : Math.round(dist) + ' m 先';
 
+    if(!nearAnnounced && dist < 100 && dist > 25){
+      nearAnnounced = true;
+      speak(`まもなく、${stepText(step)}`);
+    }
+
     if(dist < 25 && currentStepIndex < routeSteps.length - 1){
       currentStepIndex++;
       renderStep(currentStepIndex);
@@ -375,6 +419,7 @@
       const remain = haversine(currentPos.lat, currentPos.lng, dLatLng.lat, dLatLng.lng);
       el('etaDist').textContent = (remain/1000).toFixed(1);
       if(remain < 30){
+        speak('目的地に到着しました');
         finishNav('目的地に到着しました');
       }
     }
@@ -382,6 +427,8 @@
 
   function finishNav(msg){
     navigating = false;
+    lastSpokenStep = -1;
+    nearAnnounced = false;
     el('instructionPanel').classList.remove('show');
     el('bottomPanel').classList.remove('show');
     el('recenterBtn').classList.add('no-bottom');
