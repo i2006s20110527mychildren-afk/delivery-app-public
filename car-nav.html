@@ -224,42 +224,82 @@
     fetchRoute(currentPos.lat, currentPos.lng, lat, lng);
   }
 
+  // ---------- 最寄り道路へのスナップ(OSRM nearest) ----------
+  function snapToRoad(lat, lng){
+    const url = `https://router.project-osrm.org/nearest/v1/driving/${lng},${lat}?number=1`;
+    return fetch(url)
+      .then(r=>r.json())
+      .then(data=>{
+        if(data.code === 'Ok' && data.waypoints && data.waypoints.length){
+          const loc = data.waypoints[0].location; // [lng, lat]
+          return {lat: loc[1], lng: loc[0]};
+        }
+        return {lat, lng};
+      })
+      .catch(()=>({lat, lng}));
+  }
+
   // ---------- ルート取得(OSRM) ----------
   function fetchRoute(fromLat, fromLng, toLat, toLng){
     setStatus('ルート計算中...');
-    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson&steps=true&language=ja`;
+    // 出発地・目的地それぞれを最寄りの道路にスナップしてからルート計算する
+    Promise.all([
+      snapToRoad(fromLat, fromLng),
+      snapToRoad(toLat, toLng)
+    ]).then(([from, to])=>{
+      requestRoute(from.lat, from.lng, to.lat, to.lng, fromLat, fromLng, toLat, toLng);
+    });
+  }
+
+  function requestRoute(fromLat, fromLng, toLat, toLng, origFromLat, origFromLng, origToLat, origToLng){
+    // radiusesで広めの検索半径を指定し、多少ズレていてもマッチしやすくする
+    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson&steps=true&language=ja&radiuses=2000;2000`;
     fetch(url)
       .then(r=>r.json())
       .then(data=>{
         if(data.code !== 'Ok' || !data.routes || !data.routes.length){
-          setStatus('ルートが見つかりませんでした', true);
+          // スナップ後もダメなら、元の座標でも一度だけ試す
+          const fallbackUrl = `https://router.project-osrm.org/route/v1/driving/${origFromLng},${origFromLat};${origToLng},${origToLat}?overview=full&geometries=geojson&steps=true&language=ja`;
+          fetch(fallbackUrl)
+            .then(r2=>r2.json())
+            .then(data2=>{
+              if(data2.code !== 'Ok' || !data2.routes || !data2.routes.length){
+                setStatus('ルートが見つかりませんでした(道路データ上に近い道が見つかりません)', true);
+                return;
+              }
+              renderRoute(data2.routes[0]);
+            })
+            .catch(()=>{ setStatus('ルートが見つかりませんでした', true); });
           return;
         }
-        const route = data.routes[0];
-        routeCoords = route.geometry.coordinates.map(c=>[c[1], c[0]]);
-        routeSteps = route.legs[0].steps;
-
-        if(routeLine) map.removeLayer(routeLine);
-        routeLine = L.polyline(routeCoords, {color:'#3b82f6', weight:6, opacity:0.85}).addTo(map);
-        map.fitBounds(routeLine.getBounds(), {padding:[60,60]});
-
-        el('etaDist').textContent = (route.distance/1000).toFixed(1);
-        el('etaMin').textContent = Math.round(route.duration/60);
-        const eta = new Date(Date.now() + route.duration*1000);
-        el('etaTime').textContent = eta.getHours().toString().padStart(2,'0') + ':' + eta.getMinutes().toString().padStart(2,'0');
-
-        el('bottomPanel').classList.add('show');
-        el('recenterBtn').classList.remove('no-bottom');
-        el('instructionPanel').classList.add('show');
-
-        navigating = true;
-        followMode = true;
-        currentStepIndex = 0;
-        renderStep(0);
-        setStatus('', false);
-        el('statusMsg').classList.remove('show');
+        renderRoute(data.routes[0]);
       })
       .catch(()=>{ setStatus('ルート取得に失敗しました。通信環境を確認してください。', true); });
+  }
+
+  function renderRoute(route){
+    routeCoords = route.geometry.coordinates.map(c=>[c[1], c[0]]);
+    routeSteps = route.legs[0].steps;
+
+    if(routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline(routeCoords, {color:'#3b82f6', weight:6, opacity:0.85}).addTo(map);
+    map.fitBounds(routeLine.getBounds(), {padding:[60,60]});
+
+    el('etaDist').textContent = (route.distance/1000).toFixed(1);
+    el('etaMin').textContent = Math.round(route.duration/60);
+    const eta = new Date(Date.now() + route.duration*1000);
+    el('etaTime').textContent = eta.getHours().toString().padStart(2,'0') + ':' + eta.getMinutes().toString().padStart(2,'0');
+
+    el('bottomPanel').classList.add('show');
+    el('recenterBtn').classList.remove('no-bottom');
+    el('instructionPanel').classList.add('show');
+
+    navigating = true;
+    followMode = true;
+    currentStepIndex = 0;
+    renderStep(0);
+    setStatus('', false);
+    el('statusMsg').classList.remove('show');
   }
 
   // ---------- ナビ進行 ----------
