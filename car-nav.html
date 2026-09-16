@@ -19,27 +19,31 @@
 
   #searchBar{
     position:absolute; top:0; left:0; right:0; z-index:1000;
-    display:flex; gap:8px; padding:10px; background:linear-gradient(to bottom, rgba(15,23,42,0.95), rgba(15,23,42,0));
+    display:flex; align-items:flex-start; gap:8px; padding:10px; background:linear-gradient(to bottom, rgba(15,23,42,0.95), rgba(15,23,42,0));
   }
-  #destInput{
-    flex:1; padding:12px 14px; border-radius:12px; border:none;
+  #inputCol{flex:1; display:flex; flex-direction:column; gap:8px;}
+  #origInput, #destInput{
+    padding:12px 14px; border-radius:12px; border:none;
     background:var(--panel); color:var(--text); font-size:16px;
   }
-  #destInput::placeholder{color:var(--sub);}
+  #origInput{font-size:14px; opacity:0.9;}
+  #origInput::placeholder, #destInput::placeholder{color:var(--sub);}
   #goBtn{
     padding:12px 18px; border-radius:12px; border:none; background:var(--accent);
-    color:#fff; font-size:16px; font-weight:bold; white-space:nowrap;
+    color:#fff; font-size:16px; font-weight:bold; white-space:nowrap; align-self:flex-start;
   }
   #goBtn:active{opacity:0.7;}
 
-  #suggestions{
-    position:absolute; top:60px; left:10px; right:10px; z-index:1001;
+  .suggestBox{
+    position:absolute; left:10px; right:10px; z-index:1001;
     background:var(--panel); border-radius:12px; overflow:hidden; max-height:200px; overflow-y:auto;
     display:none;
   }
-  #suggestions div{padding:12px 14px; border-bottom:1px solid #334155; font-size:14px;}
-  #suggestions div:last-child{border-bottom:none;}
-  #suggestions div:active{background:#334155;}
+  #origSuggestions{ top:60px; }
+  #suggestions{ top:112px; }
+  .suggestBox div{padding:12px 14px; border-bottom:1px solid #334155; font-size:14px;}
+  .suggestBox div:last-child{border-bottom:none;}
+  .suggestBox div:active{background:#334155;}
 
   #instructionPanel{
     position:absolute; top:0; left:0; right:0; z-index:900;
@@ -92,10 +96,14 @@
   <div id="map"></div>
 
   <div id="searchBar">
-    <input type="text" id="destInput" placeholder="目的地を入力(住所・施設名)">
+    <div id="inputCol">
+      <input type="text" id="origInput" placeholder="出発地(未入力なら現在地を使用)">
+      <input type="text" id="destInput" placeholder="目的地を入力(住所・施設名)">
+    </div>
     <button id="goBtn">検索</button>
   </div>
-  <div id="suggestions"></div>
+  <div id="origSuggestions" class="suggestBox"></div>
+  <div id="suggestions" class="suggestBox"></div>
 
   <div id="instructionPanel">
     <div id="instrRow">
@@ -197,13 +205,15 @@
   }
 
   // ---------- 住所検索(ジオコーディング / Nominatim) ----------
-  function searchAddress(query){
-    if(!query || query.length < 2){ el('suggestions').style.display='none'; return; }
+  let manualOrigin = null; // {lat, lng} 手動で指定した出発地。nullなら現在地を使う
+
+  function searchAddress(query, boxId, onSelect){
+    const box = el(boxId);
+    if(!query || query.length < 2){ box.style.display='none'; return; }
     const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=jp&q=${encodeURIComponent(query)}`;
     fetch(url, {headers:{'Accept-Language':'ja'}})
       .then(r=>r.json())
       .then(results=>{
-        const box = el('suggestions');
         box.innerHTML = '';
         if(!results.length){ box.style.display='none'; return; }
         results.forEach(r=>{
@@ -211,8 +221,7 @@
           div.textContent = r.display_name;
           div.onclick = ()=>{
             box.style.display='none';
-            el('destInput').value = r.display_name;
-            setDestination(parseFloat(r.lat), parseFloat(r.lon), r.display_name);
+            onSelect(parseFloat(r.lat), parseFloat(r.lon), r.display_name);
           };
           box.appendChild(div);
         });
@@ -225,7 +234,13 @@
     if(destMarker) map.removeLayer(destMarker);
     destMarker = L.marker([lat, lng]).addTo(map);
     if(label) destMarker.bindPopup(label);
-    fetchRoute(currentPos.lat, currentPos.lng, lat, lng);
+    const origin = manualOrigin || currentPos;
+    fetchRoute(origin.lat, origin.lng, lat, lng);
+  }
+
+  function setManualOrigin(lat, lng, label){
+    manualOrigin = {lat, lng};
+    el('origInput').value = label;
   }
 
   // ---------- 最寄り道路への複数候補取得(OSRM nearest) ----------
@@ -438,15 +453,32 @@
   }
 
   // ---------- イベント ----------
+  let origSearchDebounce = null;
+
   el('destInput').addEventListener('input', e=>{
     clearTimeout(searchDebounce);
     const val = e.target.value;
-    searchDebounce = setTimeout(()=> searchAddress(val), 500);
+    searchDebounce = setTimeout(()=> searchAddress(val, 'suggestions', (lat,lng,label)=>{
+      el('destInput').value = label;
+      setDestination(lat, lng, label);
+    }), 500);
+  });
+
+  el('origInput').addEventListener('input', e=>{
+    clearTimeout(origSearchDebounce);
+    const val = e.target.value;
+    if(val.trim() === ''){ manualOrigin = null; } // 空にしたら現在地に戻す
+    origSearchDebounce = setTimeout(()=> searchAddress(val, 'origSuggestions', (lat,lng,label)=>{
+      setManualOrigin(lat, lng, label);
+    }), 500);
   });
 
   el('goBtn').addEventListener('click', ()=>{
     const q = el('destInput').value.trim();
-    if(q) searchAddress(q);
+    if(q) searchAddress(q, 'suggestions', (lat,lng,label)=>{
+      el('destInput').value = label;
+      setDestination(lat, lng, label);
+    });
   });
 
   el('recenterBtn').addEventListener('click', ()=>{
@@ -461,6 +493,9 @@
   document.addEventListener('click', e=>{
     if(e.target.id !== 'destInput' && e.target.id !== 'goBtn'){
       el('suggestions').style.display = 'none';
+    }
+    if(e.target.id !== 'origInput'){
+      el('origSuggestions').style.display = 'none';
     }
   });
 
