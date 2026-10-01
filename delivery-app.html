@@ -101,19 +101,15 @@ h1.ptitle{font-size:14px;letter-spacing:5px;color:#3a4a6a;margin-bottom:16px;tex
 #stats-status{font-size:10px;color:#5a7a9a;text-align:center;min-height:14px;margin-bottom:8px;}
 #stats-summary{display:flex;gap:8px;margin-bottom:16px;}
 .stats-summary-item{flex:1;background:#101828;border:1px solid #1a2438;border-radius:10px;padding:12px 8px;text-align:center;}
-.stats-summary-label{display:block;font-size:12px;color:#8aa0c0;letter-spacing:1px;margin-bottom:6px;}
-.stats-summary-val{font-size:24px;color:#5cffb0;font-weight:bold;}
-.stats-month-head{font-size:15px;color:#8aa0c0;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #1a2438;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;}
-.stats-month-head:active,.stats-month-head:hover{color:#5ee0ff;}
-.stats-month-head .stats-month-arrow{display:inline-block;margin-right:6px;transition:transform 0.15s;font-size:12px;}
-.stats-month-group.collapsed .stats-month-arrow{transform:rotate(-90deg);}
-.stats-month-group.collapsed .stats-month-body{display:none;}
-.stats-item{display:flex;justify-content:space-between;align-items:center;padding:14px 14px;background:#101828;border:1px solid #1a2438;border-radius:8px;margin-bottom:6px;cursor:pointer;}
+.stats-summary-label{display:block;font-size:10px;color:#8aa0c0;letter-spacing:1px;margin-bottom:6px;}
+.stats-summary-val{font-size:19px;color:#5cffb0;font-weight:bold;}
+.stats-month-head{font-size:11px;color:#8aa0c0;letter-spacing:2px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #1a2438;display:flex;justify-content:space-between;}
+.stats-item{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:#101828;border:1px solid #1a2438;border-radius:8px;margin-bottom:6px;cursor:pointer;}
 .stats-item:active,.stats-item:hover{border-color:#5ee0ff;}
-.stats-item-left{display:flex;flex-direction:column;gap:4px;}
-.stats-item-date{font-size:17px;color:#e8ecf4;letter-spacing:1px;}
-.stats-item-route{font-size:14px;color:#5a7a9a;}
-.stats-item-sales{font-size:19px;color:#ffd166;font-weight:bold;}
+.stats-item-left{display:flex;flex-direction:column;gap:3px;}
+.stats-item-date{font-size:13px;color:#e8ecf4;letter-spacing:1px;}
+.stats-item-route{font-size:11px;color:#5a7a9a;}
+.stats-item-sales{font-size:15px;color:#ffd166;font-weight:bold;}
 #stats-empty{text-align:center;color:#2a3a55;font-size:13px;padding:40px 0;}
 #stats-detail-header{display:flex;gap:8px;margin-bottom:10px;}
 #stats-back-btn{flex:1;background:transparent;border:1px solid #2a3a55;color:#5ee0ff;font-size:11px;font-family:inherit;padding:9px;border-radius:6px;cursor:pointer;letter-spacing:1px;}
@@ -538,7 +534,7 @@ var slots = [
   {label:'午後', names:['会社出発','あかり','ほでり','安べゑ','豊丸水産 高崎','葵屋','あし火','はっかい串','半兵衛','かわばんち','和出し弁当水香苑','ウマ◯','鳥放題','がブリチキン','はましょく','高崎酒多','福龍 通町店','高崎屋','丸川商店','くら田','BO-Z','さんたろう','ケバブカフェノールズ','ピッチ','パーフェクトビアキッチン','のぼる','ROSSA','カーロ高崎本店','バルレオン','モア 高崎','えびす堂','しま田 高崎','ジンギスカン いし田','kobu','トラットリア ウメ','かがり火','おでん トト炉','一福','美食酒場 NO19','うどん食堂 たみとし','鶏匠','ルチアーノ','5番館','オイスターハウス','八兵衛','アーバンホテル','アラマチサカス','ラパン','KATS','ジンギスカン オセロ ビアガーデン','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'高1', names:['会社出発','高崎芸術劇場シアターカフェ&レストラン','NEXUS moment 倉賀野','レストラン パリエ','ホテル ニューボート','ホテル メトロポリタン高崎 ローリエ','リストランテ シムラ','Bed ford Market','ボンクラージュ（旧シェタカ）','エテルナ高崎','NEXUS moment 高崎','高崎ワシントンホテルプラザ','グローバルウェディング ディアーデ','SANNY KITCHEN（メモリード）','鉄亭 高崎店','ラウライタリコ','高崎モノリス','湯都里','エテルナ高崎 婚礼部','エテルナ高崎 3F','はちきゅう 89','ティアーデ','TGH','エテルナ高崎事務所','REDROOM-rooftop&grill','REDROOM-rooftop&grill ホール 4F','レッドルームカフェ','住宅型有料老人ホーム あかし','ベイコック問屋町','キラリ','りんでんぱーむ','エテルナ高崎','杉原様','水香苑','高崎モントレー','ウエハライタリコ','Laithai','イタリアンDue','ジョジアンボウス1997（高崎）','空気回廊 四ツ居','レストランいしだ','はるカレー','鈴草 Grace','ボンジョルノ スズラン高崎店','やきめし屋 稲竹','パティスリー プチ・ポワール','COJIRO','ルアーナ','レストラン エスト','エルフリオ 大手前','リンレン','小紋','ルカランドウクール','ボンジョルノ チャオベリフェリエ','養麦処ぷんぷく高崎東口','アルカーサル迎賓館','あかり','ほでり','安べゑ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','']},
   {label:'高2', names:['会社出発','手作り菓子 Torte','鳴神食堂','ホテル ターザン','ホテル カリヴィアン','ホテル アジアン','GGCキッチン','G・G・C 高崎本店','ABA高崎店 (株)膝生','EQUILIBRE','SALLY TABLE','高崎はた山','和蘭ししかむら','大黒屋','ウェディングレストラン ジュレ','雨云','シャンゴ 問屋町本店','The Secret Home','彩食酒笑1555','おぼろ家','D-COURT Kitchen','料亭 暢神荘','ハンバーグ工房（GGCセントラル）','炭火鳥','素敵亭','ホテルグランビュー スワン','美熊野シン和食','鉄板ステーキ美熊野','鉄板焼 龍見 泰正','和食kashigi かしぎ','マンマペラッチェ(いしもとレディースクリニック)','茶房 gleam','クッチーナ チーニョ','パン工房樫','バンビーナ 筑縄','アチェロ','CoCo壱番屋 筑縄店','鉄板酒場エイト','バンビーナ セントラル','ボンジョルノ本店','おかむ','イタリア食堂 ガンベロッソ','プラリネ 高崎小鳥店','pe=anro イノイ アシロー','パニーズ カフェ','株式会社もぎたて完熟屋','シャンゴ 問屋町支店','AQUA TABLE','PAN DA SAN','(株)リアン Lien','FAT DAY','サマタこめ販売','K deli factory','ボウール高崎','高崎食品','いなほ','Cobako','ビストロ レガル','BARON','福籠 飯塚店','風の都','ほたる食堂＆スナック','中華ダイニング 好','休憩','その他店舗','会社帰宅','','','','','','','','','','','','']},
-  {label:'高北', names:['会社出発','(株)オルビス ロービー','(株)オルビス 群馬工場','SHOP Takasaki Horumon','天神の湯','ケアホーム「家族の家」浜川','コニファー いわびつ','ローストビーフ丼 やまと','FDKトワイセル高崎','紅虎菜舗 イオンモール高崎','一汁五穀 高崎店','博多弁天堂','和 cafe 麦','ガットビアンコ','(株)アセットホールディングス（レーサムゴルフ AL）','ギオットーネ','(株)アセットホールディングス（レーサムゴルフCH 売店）','NEXUSレジャー事業部 安中店','(株)アセットホールディングス（レーサムゴルフCH ホール）','(株)アセットホールディングス（レーサムゴルフCH カフェ）','NEXUS moment 安中店','梅の郷ゴルフ倶楽部','ホテル イエスタデイ','プラリネ菅谷店','丸駒製麺','パティスリー トワ','Nano','カレー風味すずき','プティ シャンブル','Luonto','東京餃子軒','dmキッチン グリーン牧場','アニマルガーデン コネクト','Patisserie CoCo','黒沢病院','黒沢病院ヘルスパーククリニック（人間ドック）','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'高北', names:['会社出発','(株)オルビス ロービー','(株)オルビス 群馬工場','SHOP Takasaki Horumon','天神の湯','ケアホーム「家族の家」浜川','コニファー いわびつ','ローストビーフ丼 やまと','FDKトワイセル高崎','紅虎菜舗 イオンモール高崎','一汁五穀 高崎店','博多弁天堂','和 cafe 麦','ガットビアンコ','(株)アセットホールディングス（レーサムゴルフ AL）','ギオットーネ','(株)アセットホールディングス（レーサムゴルフCH 売店）','NEXUSレジャー事業部 安中店','(株)アセットホールディングス（レーサムゴルフCH ホール）','(株)アセットホールディングス（レーサムゴルフCH カフェ）','NEXUS moment 安中店','梅の郷ゴルフ倶楽部','ホテル イエスタデイ','プラリネ菅谷店','丸駒製麺','パティスリー トワ','Nano','カレー風味すずき','プティ シャンブル','Luonto','東京餃子軒','dmキッチン グリーン牧場','アニマルガーデン コネクト','Patisserie CoCo','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'前1', names:['会社出発','富金豚','ごま屋','(株)藤生 ABCクッキングスタジオけやき','紅トラ','そらの森珈琲 古市店','サザンメイドカフェ 前橋店','群馬中央病院','ニューデリー','Bistro欅','ikoi','RK by lalu（ラル）','ラーメン二郎','GRASSA','PIZZERIA ペスカ まちなか店','松し満','まる兵ラーメン','ルパン','YAMATOYA COFFEE32','群馬県庁生活協同組合','スワン ヴォレ・シーニュ','Café Le Cocon','スワン 朔詩舎','エメ ポテト','らーめん戸丸屋','BAR AND GRILL CENTO','赤から 前橋下小出店','コンプレアンノ','鮨いちもん 前橋店','CHELSEA','福ベーグル','おおしまや','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'前2', names:['会社出発','そば蔵','Cafe & Bar Wish','カリーマハール','幸ちゃん もつ鍋本舗 前橋本店','ザ リーグスプレミアムテラス','G．G．C前橋小相木店','いんこう家','幸ちゃん 前橋店','Restaurant Doi','アメイジンググレイス','NEXUS 勝とき食堂前橋南店','NEXUS 勝とき食堂ガーデン前橋店','マザーズクリニックTAMURA','前橋ロイヤルホテル','よろずや寒春','てん幻','新木珈琲店 広瀬店','コンフォートホテル前橋','焼肉 たくみ','ドーマイン前橋','七福の湯 前橋店','東京インテリアMOAカフェ','トラットリアバンビーナ前橋南店','前橋赤十字病院職員食堂','あがたコト前橋大島駅前キッチンカー店','群馬県立心臓血管センター 院長','faro blannco cafe','アルフアルフア広瀬','アルフアルフア天川','シャンゴ 前橋南店','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'前3', names:['会社出発','覚瑛','スワン マックススクエアー','スワン リストラテ チイニョ','鮨いちもん 高崎新保店','とり弁鶏 前橋川曲店','hanadan cafe','スワン 雪月夢','スワン サンプラザ','セレンディップ','椿 家 TUBAKI-YA 本店','高崎グリーンポイント','ボンジョルノ 新クッチーナ店','(株)ツドイエ（ホテルラシーネ）和食','シャンゴ 前橋石倉店','鮨ダイニング 青木','ファミリー太閣（ミートディッシュ）','逢とり縁','(株)ビューサービス ロイヤルチェスター前橋','ケータリング事業部 くろまつキッチン','KUROMATSU','日高病院','レストラン日高','駒井病院 患者','群大 プランタン','NEXUS 勝とき食堂金古店','そらの森珈琲','ボンジョルノ ラヴォーチェ店','ステーキ 真樹','(株)ツドイエ（ホテルラシーネ）洋食','モダンゴルフ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
@@ -548,7 +544,7 @@ var slots = [
   {label:'安中・富岡', names:['会社出発','矢中家','矢中食堂','吉井カントリークラブ','Pizzeria deco','古民家カフェくいな','baimai 富岡店','パスタバル ミルティーロ','グランクラッセ','群馬サファリパーク','富岡倶楽部','峠の茶屋','いっちゃん','ビストロ ユジェーヌ','バーガー ルアーナ','シャンゴ 倉賀野','Kim\'s デリ','Uno イタリアーノ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'伊香保', names:['会社出発','(株)出雲','榛名湖温泉ゆうすげ元湯','伊香保グリーン牧場 32363','大江戸温泉物語(株) 伊香保','レストラン ランデブー','リタプラン（ブランカフェ）','ローランドゴルフ 社食','ローランドゴルフ レストラン','横手館','(株)ホテル 松本楼','伊香保カントリークラブ','NEXUS moment 沼田店','NEXUS moment 渋川インター店','NEXUS moment 中之条店','焼肉やまと','丹次亭','P&Eフーズ 前橋店','焼肉 よねやま','ナポリの食卓 高崎店','はなの舞 相馬原駐屯地店','NEXUSレジャー事業部 沼田店','ちる家 彌鳥不°','おおぎやラーメン 沼田インター店','おおぎやラーメン 沼田店','おおぎやラーメン 子持店','おおぎやラーメン 吾妻原町店','パルメナーラ','あがた吾妻原町本店','福州亭','カフェ タール','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
   {label:'軽井沢', names:['会社出発','四季倶楽部 アイソネット草津','相の湯温泉ふれあい館','中沢ヴィレッジ','草津ホテル株式会社','望雲','ホテルグリーンプラザ軽井沢（プレジデント）','ホテル軽井沢1130（サンライズ）','(有)大地 薬師温泉 旅籠','焼肉オオギヤ','ANA','草津温泉スキー場','プレジデントリゾート軽井沢 スノーパーク','ヴィラ北軽井沢エルウイング','永田屋','GGC草津温泉専門店','太平洋クラブ','やまと屋 八ッ場本店','亀の井ホテル 汚水畑','CAFÉ ASPEN','ジンギスカン','草津運動茶屋公園道の駅','HANAYADO BAELZ','nanakusa','浅間酒造観光センター','さいたま屋','カフェレストラン ソニアン','洋麺亭','うどん 園','TIGRE草津温泉','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
-  {label:'水上', names:['会社出発','ナポリの食卓 高崎店','P & E フーズ','スリービルボード','よねやま','チルコリーノ','おおぎやラーメン 子持店','おおぎやラーメン沼田店','たま農園','おおぎやラーメン沼田インター店','悠湯里庵','ふじやまビレッジ','D\'ステ沼田','松乃井','ユートピア','ポポラーレ','福州亭','D\'ステ渋川','スカイテルメ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
+  {label:'水上', names:['会社出発','ナポリの食卓 高崎店','P & E フーズ','スリービルボード','よねやま','チルコリーノ','おおぎやラーメン 子持店','おおぎやラーメン沼田店','たま農園','おおぎやラーメン沼田インター店','レストランほたか','ピッツェリア・ラコルト','悠湯里庵','ふじやまビレッジ','D\'ステ沼田','松乃井','ユートピア','ポポラーレ','福州亭','D\'ステ渋川','スカイテルメ','休憩','その他店舗','会社帰宅','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']},
 ];
 var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').concat(
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(function(c){ return 'A'+c; })
@@ -893,14 +889,11 @@ function updateTourStatus(){
 }
 
 function resetTour(){
-  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）\n※報告書の入力内容（売上・車輌No・走行距離）もクリアされます')) return;
+  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）')) return;
   waypoints = makeEmptyWaypoints();
-  activeSlots = [];
   saveState();
-  clearReportInputs();
   // レポートのロックを解除
   unlockReportSilent();
-  renderSlots();
   renderPicker();
   renderWaypoints();
 }
@@ -1465,17 +1458,12 @@ function renderStatsList(){
 
   var html = '';
   var lastYm = '';
-  var curYm = ymNow; // 現在の月はデフォルトで開いておく
   sorted.forEach(function(r){
     var ym = (r.date||'').slice(0,7);
     if(ym !== lastYm){
-      if(lastYm !== '') html += '</div></div>'; // 直前の月グループを閉じる
       var ymRecords = sorted.filter(function(rr){ return (rr.date||'').slice(0,7) === ym; });
       var ymTotal = ymRecords.reduce(function(sum, rr){ return sum + (rr.salesTotal||0); }, 0);
-      var isExpanded = (expandedMonths[ym] !== undefined) ? expandedMonths[ym] : (ym === curYm);
-      html += '<div class="stats-month-group'+(isExpanded ? '' : ' collapsed')+'" data-ym="'+ym+'">'+
-        '<div class="stats-month-head"><span><span class="stats-month-arrow">▼</span>'+ym.replace('/','年')+'月</span><span>合計 '+ymTotal.toLocaleString()+'円　('+ymRecords.length+'日)</span></div>'+
-        '<div class="stats-month-body">';
+      html += '<div class="stats-month-head"><span>'+ym.replace('/','年')+'月</span><span>合計 '+ymTotal.toLocaleString()+'円　('+ymRecords.length+'日)</span></div>';
       lastYm = ym;
     }
     html += '<div class="stats-item" data-record-id="'+escHtml(r.id)+'">'+
@@ -1483,26 +1471,11 @@ function renderStatsList(){
       '<span class="stats-item-sales">'+((r.salesTotal||0).toLocaleString())+'円</span>'+
     '</div>';
   });
-  if(lastYm !== '') html += '</div></div>'; // 最後の月グループを閉じる
   listEl.innerHTML = html;
 }
 
-// 開いている月を記憶（デフォルトは今月のみ開く）
-var expandedMonths = {};
-
 // リスト項目のクリックをイベント委譲で処理（idベースなので並び替え・削除があってもズレない）
 document.getElementById('stats-list').addEventListener('click', function(e){
-  var head = e.target.closest('.stats-month-head');
-  if(head){
-    var group = head.closest('.stats-month-group');
-    if(group){
-      var ym = group.dataset.ym;
-      var willExpand = group.classList.contains('collapsed');
-      group.classList.toggle('collapsed');
-      expandedMonths[ym] = willExpand;
-    }
-    return;
-  }
   var item = e.target.closest('.stats-item');
   if(item && item.dataset.recordId){ showStatsDetail(item.dataset.recordId); }
 });
@@ -1957,14 +1930,13 @@ function sendReport(){
 
 // ===== クラウド同期設定（Apps Script中継版・安全） =====
 var RELAY_URL = 'https://script.google.com/macros/s/AKfycbzviYFvU6ntm5790_J2ofTSgdVzmM8dWXASABzITEH0Bz1c9AzD82fFQuRfdKlAHjH3CQ/exec';
-var RELAY_TOKEN = 'dhwKsTnOcy8Y5cFMgnWg';
 
 async function uploadToCloud(report){
   try{
     var res = await fetch(RELAY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'upload', token: RELAY_TOKEN, report: report })
+      body: JSON.stringify({ type: 'upload', report: report })
     });
     if(!res.ok) return false;
     var data = await res.json();
@@ -2293,10 +2265,6 @@ document.addEventListener('input', function(e){
   if(e.target.id === 'report-memo' || e.target.id === 'report-memo2'){
     saveReportInputs();
   }
-  if(e.target.id === 'report-car' || e.target.id === 'report-km-start' || e.target.id === 'report-km-end'){
-    if(typeof calcKm === 'function') calcKm();
-    saveReportInputs();
-  }
   // 報告書に関わる入力があれば集計へ自動保存
   if(
     e.target.classList.contains('sales-input') ||
@@ -2311,68 +2279,21 @@ document.addEventListener('input', function(e){
 // 台車の状態（ラジオボタン）の変更も自動保存
 document.addEventListener('change', function(e){
   if(e.target.name === 'truck'){
-    saveReportInputs();
     scheduleAutoSaveReport();
   }
 });
 
 // 売上・備考をIndexedDBに保存（タスク削除しても消えない）
-// 報告書の入力値（売上・車輌No・走行距離・メモ等）をクリアする
-function clearReportInputs(){
-  try{
-    document.querySelectorAll('.sales-input').forEach(function(el){ el.value=''; });
-    var memo = document.getElementById('report-memo');
-    if(memo) memo.value = '';
-    var memo2 = document.getElementById('report-memo2');
-    if(memo2) memo2.value = '';
-    var car = document.getElementById('report-car');
-    if(car) car.value = '';
-    var kmStart = document.getElementById('report-km-start');
-    if(kmStart) kmStart.value = '';
-    var kmEnd = document.getElementById('report-km-end');
-    if(kmEnd) kmEnd.value = '';
-    var car2 = document.getElementById('report-car2');
-    if(car2) car2.textContent = '';
-    var route = document.getElementById('report-route');
-    if(route) route.value = '';
-    var route2 = document.getElementById('report-route2');
-    if(route2) route2.textContent = '';
-    // 台車の状態（ラジオボタン）も選択解除（日付変更時・記録リセット時のみ）
-    document.querySelectorAll('input[name="truck"]').forEach(function(el){ el.checked = false; });
-    if(typeof calcSalesTotal === 'function') calcSalesTotal();
-    if(typeof calcKm === 'function') calcKm();
-  }catch(e){}
-  try{ localStorage.removeItem('report-inputs'); }catch(e){}
-  try{ idbSet('report-inputs', JSON.stringify({})); }catch(e){}
-  try{ window.storage.set('report-inputs', JSON.stringify({}), false); }catch(e){}
-}
-
 function saveReportInputs(){
   try{
-    var salesEls = document.querySelectorAll('.sales-input');
-    // 報告書テーブルがまだ描画されていない（切替直後などで0件の）場合は
-    // 保存済みの売上データを空データで上書きしてしまうため、ここでは何もしない
-    if(salesEls.length === 0) return;
     var data = {};
-    salesEls.forEach(function(el, i){ data['sales_'+i] = el.value; });
+    document.querySelectorAll('.sales-input').forEach(function(el, i){ data['sales_'+i] = el.value; });
     var memo = document.getElementById('report-memo');
     if(memo) data['memo'] = memo.value;
     var memo2 = document.getElementById('report-memo2');
     if(memo2) data['memo2'] = memo2.value;
-    var car = document.getElementById('report-car');
-    if(car) data['car'] = car.value;
-    var kmStart = document.getElementById('report-km-start');
-    if(kmStart) data['kmStart'] = kmStart.value;
-    var kmEnd = document.getElementById('report-km-end');
-    if(kmEnd) data['kmEnd'] = kmEnd.value;
-    var route = document.getElementById('report-route');
-    if(route) data['route'] = route.value;
-    var truckEl = document.querySelector('input[name="truck"]:checked');
-    if(truckEl) data['truck'] = truckEl.value;
     var json = JSON.stringify(data);
-    // localStorage（同期・即完了・バックヤードから消されても確実に残る）
-    try{ localStorage.setItem('report-inputs', json); }catch(e){}
-    // IndexedDB（永続・非同期）
+    // IndexedDB（永続）
     idbSet('report-inputs', json);
     // window.storage（バックアップ）
     try{ window.storage.set('report-inputs', json, false); }catch(e){}
@@ -2381,19 +2302,12 @@ function saveReportInputs(){
 
 async function loadReportInputs(){
   var data = null;
-  // localStorageから読み込む（同期・最速・最優先）
+  // IndexedDBから読み込む（優先）
   try{
-    var ls = localStorage.getItem('report-inputs');
-    if(ls) data = JSON.parse(ls);
+    var val = await idbGet('report-inputs');
+    if(val) data = JSON.parse(val);
   }catch(e){}
-  // なければIndexedDBから読み込む
-  if(!data){
-    try{
-      var val = await idbGet('report-inputs');
-      if(val) data = JSON.parse(val);
-    }catch(e){}
-  }
-  // それでもダメならwindow.storageから
+  // ダメならwindow.storageから
   if(!data){
     try{
       var r = await window.storage.get('report-inputs', false);
@@ -2409,23 +2323,7 @@ async function loadReportInputs(){
   if(memo && data['memo']) memo.value = data['memo'];
   var memo2 = document.getElementById('report-memo2');
   if(memo2 && data['memo2']) memo2.value = data['memo2'];
-  var car = document.getElementById('report-car');
-  if(car && data['car']) car.value = data['car'];
-  var kmStart = document.getElementById('report-km-start');
-  if(kmStart && data['kmStart']) kmStart.value = data['kmStart'];
-  var kmEnd = document.getElementById('report-km-end');
-  if(kmEnd && data['kmEnd']) kmEnd.value = data['kmEnd'];
-  var route = document.getElementById('report-route');
-  if(route && data['route']) route.value = data['route'];
-  if(data['truck']){
-    var truckEl = document.querySelector('input[name="truck"][value="'+data['truck']+'"]');
-    if(truckEl) truckEl.checked = true;
-  }
-  var route2 = document.getElementById('report-route2');
-  if(route2 && route) route2.textContent = route.value || '';
   calcSalesTotal();
-  if(typeof calcKm === 'function') calcKm();
-  if(document.getElementById('report-car2') && car) document.getElementById('report-car2').textContent = car.value || '';
 }
 
 // 今日の日付を「YYYY/MM/DD」形式で取得
@@ -2439,8 +2337,6 @@ async function saveState(){
   try{
     var state = { waypoints: waypoints, activeSlots: activeSlots, savedDate: todayDateStr() };
     var json = JSON.stringify(state);
-    // localStorage（同期・即完了・バックヤードから消されても確実に残る）
-    try{ localStorage.setItem('delivery-state', json); }catch(e){}
     await idbSet('delivery-state', json);
     // window.storage（対応環境向けの追加バックアップ。非対応環境では失敗しても無視）
     try{ await window.storage.set('delivery-state', json, false); }catch(e){}
@@ -2449,10 +2345,7 @@ async function saveState(){
 
 async function loadState(){
   try{
-    var val = null;
-    // localStorageから読み込む（同期・最速・最優先＝日付判定の誤りを防ぐ）
-    try{ val = localStorage.getItem('delivery-state'); }catch(e){}
-    if(!val) val = await idbGet('delivery-state');
+    var val = await idbGet('delivery-state');
     // IndexedDBになければwindow.storageから（対応環境のみ）
     if(!val){
       try{
@@ -2467,7 +2360,6 @@ async function loadState(){
         waypoints = makeEmptyWaypoints();
         try{ idbSet('report-locked','0'); }catch(e){}
         try{ window.storage.set('report-locked','0',false); }catch(e){}
-        clearReportInputs();
         saveState();
       } else {
         if(state.waypoints) waypoints = state.waypoints;
@@ -2488,12 +2380,9 @@ renderWaypoints();
 (async function(){
   try{ await loadState(); }catch(e){}
   try{ await loadMonthlyData(); }catch(e){}
-  // 保存内容の反映で必要な一覧の再描画を先に済ませてから、入力値を復元する
-  // （この順番を逆にすると、復元直後の再描画で売上・ルート名が消える）
   renderSlots();
   renderPicker();
   renderWaypoints();
-  try{ await loadReportInputs(); }catch(e){}
 })();
 </script>
 </body>
