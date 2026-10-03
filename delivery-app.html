@@ -558,17 +558,23 @@ function updateSlotName(slotIdx, letterIdx, val){
 
 var activeSlots = []; // 配送先一覧でタップして選択された枠のインデックス
 var openSlots = []; // ABCDの表示/非表示状態
+var lastAutoRouteValue = ''; // 自動反映したルート名（手入力と区別するため）
 
 function toggleSlotActive(si){
   var idx = activeSlots.indexOf(si);
   if(idx >= 0) activeSlots.splice(idx,1);
   else activeSlots.push(si);
   renderSlots();
-  // 選択中の枠ラベルをルート名に自動反映
+  // 選択中の枠ラベルをルート名に自動反映（手入力で変更済みの場合は上書きしない）
   var routeInput = document.getElementById('report-route');
   if(routeInput){
     var labels = activeSlots.map(function(i){ return slots[i].label; });
-    routeInput.value = labels.join('・');
+    var autoValue = labels.join('・');
+    if(routeInput.value === '' || routeInput.value === lastAutoRouteValue){
+      routeInput.value = autoValue;
+      saveReportInputs();
+    }
+    lastAutoRouteValue = autoValue;
   }
   saveState();
 }
@@ -2262,7 +2268,11 @@ document.addEventListener('input', function(e){
     calcSalesTotal();
     saveReportInputs();
   }
-  if(e.target.id === 'report-memo' || e.target.id === 'report-memo2'){
+  if(
+    e.target.id === 'report-memo' || e.target.id === 'report-memo2' ||
+    e.target.id === 'report-route' || e.target.id === 'report-car' ||
+    e.target.id === 'report-km-start' || e.target.id === 'report-km-end'
+  ){
     saveReportInputs();
   }
   // 報告書に関わる入力があれば集計へ自動保存
@@ -2279,6 +2289,7 @@ document.addEventListener('input', function(e){
 // 台車の状態（ラジオボタン）の変更も自動保存
 document.addEventListener('change', function(e){
   if(e.target.name === 'truck'){
+    saveReportInputs();
     scheduleAutoSaveReport();
   }
 });
@@ -2292,6 +2303,16 @@ function saveReportInputs(){
     if(memo) data['memo'] = memo.value;
     var memo2 = document.getElementById('report-memo2');
     if(memo2) data['memo2'] = memo2.value;
+    var route = document.getElementById('report-route');
+    if(route) data['route'] = route.value;
+    var car = document.getElementById('report-car');
+    if(car) data['car'] = car.value;
+    var kmStart = document.getElementById('report-km-start');
+    if(kmStart) data['kmStart'] = kmStart.value;
+    var kmEnd = document.getElementById('report-km-end');
+    if(kmEnd) data['kmEnd'] = kmEnd.value;
+    var truck = document.querySelector('input[name="truck"]:checked');
+    if(truck) data['truck'] = truck.value;
     var json = JSON.stringify(data);
     // IndexedDB（永続）
     idbSet('report-inputs', json);
@@ -2323,7 +2344,20 @@ async function loadReportInputs(){
   if(memo && data['memo']) memo.value = data['memo'];
   var memo2 = document.getElementById('report-memo2');
   if(memo2 && data['memo2']) memo2.value = data['memo2'];
+  var route = document.getElementById('report-route');
+  if(route && data['route'] && !route.value) route.value = data['route'];
+  var car = document.getElementById('report-car');
+  if(car && data['car'] && !car.value) car.value = data['car'];
+  var kmStart = document.getElementById('report-km-start');
+  if(kmStart && data['kmStart'] && !kmStart.value) kmStart.value = data['kmStart'];
+  var kmEnd = document.getElementById('report-km-end');
+  if(kmEnd && data['kmEnd'] && !kmEnd.value) kmEnd.value = data['kmEnd'];
+  if(data['truck']){
+    var truckRadio = document.querySelector('input[name="truck"][value="'+data['truck']+'"]');
+    if(truckRadio) truckRadio.checked = true;
+  }
   calcSalesTotal();
+  calcKm();
 }
 
 // 今日の日付を「YYYY/MM/DD」形式で取得
