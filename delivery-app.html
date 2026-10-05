@@ -498,6 +498,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 // ===== タブ切替 =====
 function switchTab(p){
+  // 日付が変わっていたら前日の記録を消してから切り替える
+  checkDayRollover();
   // タブ切替前に売上データを保存
   saveReportInputs();
   // 報告書タブから離れる際は自動保存を即座に確定（デバウンス待ちしない）
@@ -559,6 +561,10 @@ function updateSlotName(slotIdx, letterIdx, val){
 var activeSlots = []; // 配送先一覧でタップして選択された枠のインデックス
 var openSlots = []; // ABCDの表示/非表示状態
 var lastAutoRouteValue = ''; // 自動反映したルート名（手入力と区別するため）
+// 保存済みの内容を画面に戻し終わるまでは、空の入力欄で保存内容を上書きしないためのフラグ
+var textInputsLoaded = false; // ルート名・車・走行距離・備考を復元済みか
+var salesRestored = false;    // 売上欄を復元済みか（表を作り直すたびにfalseに戻る）
+var reportDayStamp = todayDateStr(); // このページを開いた日（日替わりで消す項目が「何日の分か」の判定用）
 
 function toggleSlotActive(si){
   var idx = activeSlots.indexOf(si);
@@ -895,13 +901,50 @@ function updateTourStatus(){
 }
 
 function resetTour(){
-  if(!confirm('配送記録をリセットしますか？（配送先の選択も解除されます）')) return;
+  if(!confirm('配送記録をリセットしますか？\n（配送先の選択・売上・備考・ルート名・車ナンバー・走行距離が消えます）')) return;
   waypoints = makeEmptyWaypoints();
   saveState();
+  clearDailyReport(); // 売上・備考・ルート名・車ナンバー・走行距離も消す
   // レポートのロックを解除
   unlockReportSilent();
   renderPicker();
   renderWaypoints();
+}
+
+async function clearDailyReport(){
+  try{
+    // 画面に残っている入力欄も先に空にする（残っていると、この後の自動保存で書き戻されてしまう）
+    document.querySelectorAll('.sales-input, [data-mrid]').forEach(function(el){ el.value = ''; });
+    ['report-route','report-car','report-km-start','report-km-end'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.value = '';
+    });
+    lastAutoRouteValue = '';
+    calcSalesTotal();
+    calcKm();
+    var data = {};
+    try{ var v = await idbGet('report-inputs'); if(v) data = JSON.parse(v) || {}; }catch(e){}
+    purgeDailyData(data);
+    data['reportDate'] = reportDayStamp;
+    var json = JSON.stringify(data);
+    idbSet('report-inputs', json);
+    try{ window.storage.set('report-inputs', json, false); }catch(e){}
+  }catch(e){}
+}
+
+// アプリを開いたまま（または裏から戻って）日付が変わっていた場合、前日の記録を自動で消す。
+// 起動時の自動クリア（loadState）と同じ扱い：配送記録と、売上・備考・ルート名・車ナンバー・走行距離を消す
+function checkDayRollover(){
+  var today = todayDateStr();
+  if(today === reportDayStamp) return;
+  reportDayStamp = today;
+  waypoints = makeEmptyWaypoints();
+  saveState();
+  unlockReportSilent();
+  clearDailyReport();
+  renderPicker();
+  renderWaypoints();
+  var hp = document.getElementById('page-history');
+  if(hp && hp.classList.contains('active')) renderHistory();
 }
 
 function unlockReportSilent(){
@@ -955,6 +998,12 @@ function renderHistory(){
 
   // 配送欄に設定された配送先を取得（記録済み or 未記録）
   var activeWps = waypoints.filter(function(w){ return w.key!==null; });
+  // 売上を「行の順番」ではなく「どの配送先か（同じ配送先は何回目か）」に結びつけるための識別子
+  var rowIds = [];
+  (function(){
+    var seen = {};
+    activeWps.forEach(function(w){ seen[w.key] = (seen[w.key]||0) + 1; rowIds.push(w.key+'#'+seen[w.key]); });
+  })();
 
   if(activeWps.length===0){
     tbody.innerHTML = '';
@@ -995,18 +1044,20 @@ function renderHistory(){
       '<td class="td-time">'+delivTime+'</td>'+
       '<td class="td-time">'+(w.temp||'')+'</td>'+
       '<td class="td-name">'+escHtml(name)+'</td>'+
-      '<td><input class="td-input sales-input" placeholder="0"></td>'+
-      '<td><input class="td-input" placeholder=""></td>'+
+      '<td><input class="td-input sales-input" data-rid="'+rowIds[i]+'" placeholder="0"></td>'+
+      '<td><input class="td-input" data-mrid="'+rowIds[i]+'" placeholder=""></td>'+
     '</tr>';
   }).join('');
 
   // 35行になるよう空行を追加
   var emptyRow = '<tr><td class="td-num"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-time"></td><td class="td-name"></td><td><input class="td-input sales-input" placeholder="0"></td><td><input class="td-input" placeholder=""></td></tr>';
   for(var ei = dataRows.length; ei < MAX_ROWS; ei++){
-    rows += emptyRow;
+    rows += emptyRow.replace('<input class="td-input sales-input"', '<input data-rid="pad1_'+ei+'" class="td-input sales-input"')
+                    .replace('<td><input class="td-input" placeholder=""></td></tr>', '<td><input data-mrid="pad1_'+ei+'" class="td-input" placeholder=""></td></tr>');
   }
 
   tbody.innerHTML = rows;
+  salesRestored = false; // 空の売上欄を作り直したので、復元が終わるまで売上は保存しない
 
   // 件数（会社出発・会社帰宅を除く）
   var count = activeWps.filter(function(w){
@@ -1057,12 +1108,13 @@ function renderHistory(){
         '<td class="td-time">'+delivTime+'</td>'+
         '<td class="td-time">'+(w.temp||'')+'</td>'+
         '<td class="td-name">'+escHtml(name)+'</td>'+
-        '<td><input class="td-input sales-input" placeholder="0"></td>'+
-        '<td><input class="td-input" placeholder=""></td>'+
+        '<td><input class="td-input sales-input" data-rid="'+rowIds[ri]+'" placeholder="0"></td>'+
+        '<td><input class="td-input" data-mrid="'+rowIds[ri]+'" placeholder=""></td>'+
       '</tr>';
     }).join('');
     var emptyRow2 = '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td><input class="td-input sales-input" placeholder="0"></td><td><input class="td-input" placeholder=""></td></tr>';
-    for(var ei2=page2Wps.length; ei2<MAX_ROWS; ei2++) rows2 += emptyRow2;
+    for(var ei2=page2Wps.length; ei2<MAX_ROWS; ei2++) rows2 += emptyRow2.replace('<input class="td-input sales-input"', '<input data-rid="pad2_'+ei2+'" class="td-input sales-input"')
+                                                    .replace('<td><input class="td-input" placeholder=""></td></tr>', '<td><input data-mrid="pad2_'+ei2+'" class="td-input" placeholder=""></td></tr>');
     tbody2.innerHTML = rows2;
   } else {
     page2El.style.display = 'none';
@@ -2258,6 +2310,7 @@ function calcSalesTotal(){
 
 // 画面を離れた時・バックグラウンド時も自動保存
 document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') checkDayRollover();
   saveReportInputs();
   saveState();
 });
@@ -2266,6 +2319,9 @@ document.addEventListener('visibilitychange', function(){
 document.addEventListener('input', function(e){
   if(e.target.classList.contains('sales-input')){
     calcSalesTotal();
+    saveReportInputs();
+  }
+  if(e.target.hasAttribute && e.target.hasAttribute('data-mrid')){
     saveReportInputs();
   }
   if(
@@ -2295,15 +2351,31 @@ document.addEventListener('change', function(e){
 });
 
 // 売上・備考をIndexedDBに保存（タスク削除しても消えない）
+// 日付が変わった時・記録をリセットした時に消す項目（売上・備考・ルート名・車ナンバー・走行距離）。
+// これ以外の項目（報告内容・台車の状態など）と、これ以外の操作では消さない。
+var DAILY_KEYS = ['salesByKey', 'memoByKey', 'route', 'car', 'kmStart', 'kmEnd'];
+function purgeDailyData(data){
+  DAILY_KEYS.forEach(function(k){ delete data[k]; });
+  Object.keys(data).forEach(function(k){ if(k.indexOf('sales_')===0) delete data[k]; }); // 旧形式
+}
+
 async function saveReportInputs(){
   try{
     // ここから先でawait（非同期待ち）する前に、今のDOMの状態を同期的に
     // 全部読み取っておく。呼び出し側はこの関数の完了を待たずに続けて
     // renderHistory()などで表を作り直すことがあるため、先にawaitしてしまうと
     // 再開した時には表がすでに空にされていて売上を正しく読み取れなくなる。
-    var salesEls = document.querySelectorAll('.sales-input');
-    var salesValues = [];
-    salesEls.forEach(function(el){ salesValues.push(el.value); });
+    var canSaveText = textInputsLoaded;   // 復元前は空欄で上書きしない
+    var canSaveRows = salesRestored;
+    var dayStamp = reportDayStamp;
+    var salesPairs = [];
+    document.querySelectorAll('.sales-input').forEach(function(el, i){
+      salesPairs.push({id: el.dataset.rid || ('idx'+i), value: el.value});
+    });
+    var memoPairs = [];
+    document.querySelectorAll('[data-mrid]').forEach(function(el){
+      memoPairs.push({id: el.getAttribute('data-mrid'), value: el.value});
+    });
 
     var memo = document.getElementById('report-memo');
     var memoVal = memo ? memo.value : undefined;
@@ -2320,29 +2392,46 @@ async function saveReportInputs(){
     var truck = document.querySelector('input[name="truck"]:checked');
     var truckVal = truck ? truck.value : undefined;
 
-    // まず今まで保存されている内容を読み込み、売上データが無い（表の未描画中）の
-    // タイミングで保存してしまっても、既存の売上データを消さないようにする
+    // 今まで保存されている内容を読み込んで、そこに今の内容を重ねて保存する
     var data = {};
     try{
       var prevVal = await idbGet('report-inputs');
       if(prevVal) data = JSON.parse(prevVal) || {};
     }catch(e){}
 
-    if(salesEls.length > 0){
-      // 表が描画されている時だけ売上データを今の内容で置き換える
-      Object.keys(data).forEach(function(k){ if(k.indexOf('sales_')===0) delete data[k]; });
-      salesValues.forEach(function(v, i){ data['sales_'+i] = v; });
-    }
-    // salesEls.length===0（タブ切替直後などで表がまだ空の瞬間）の場合は
-    // 売上データ（sales_*）には触れず、直前に保存されていた内容をそのまま維持する
+    // 保存済みの日替わり項目が別の日の分なら引き継がない（日付が変わったら空から始める）
+    if(data['reportDate'] && data['reportDate'] !== dayStamp) purgeDailyData(data);
+    data['reportDate'] = dayStamp;
 
-    if(memoVal !== undefined) data['memo'] = memoVal;
-    if(memo2Val !== undefined) data['memo2'] = memo2Val;
-    if(routeVal !== undefined) data['route'] = routeVal;
-    if(carVal !== undefined) data['car'] = carVal;
-    if(kmStartVal !== undefined) data['kmStart'] = kmStartVal;
-    if(kmEndVal !== undefined) data['kmEnd'] = kmEndVal;
-    if(truckVal !== undefined) data['truck'] = truckVal;
+    if(canSaveRows){
+      // 表が描画され、保存済みの内容を戻し終わっている時だけ、売上・備考を今の内容で更新する。
+      // 今表示されている行は今の内容で更新し、表示されていない配送先（一時的に外した店など）の分は残す。
+      var mergeInto = function(storeKey, pairs){
+        var prevMap = data[storeKey] || {};
+        var merged = {};
+        Object.keys(prevMap).forEach(function(k){ if(k.indexOf('pad')!==0) merged[k] = prevMap[k]; });
+        pairs.forEach(function(sp){
+          if(sp.value !== '') merged[sp.id] = sp.value; else delete merged[sp.id];
+        });
+        data[storeKey] = merged;
+      };
+      if(salesPairs.length > 0){
+        mergeInto('salesByKey', salesPairs);
+        Object.keys(data).forEach(function(k){ if(k.indexOf('sales_')===0) delete data[k]; }); // 旧形式（行番号保存）は、新形式に移した後で廃止
+      }
+      if(memoPairs.length > 0) mergeInto('memoByKey', memoPairs);
+    }
+    // 表がまだ空の瞬間（タブ切替直後など）は、売上・備考には触れず、保存済みの内容をそのまま維持する
+
+    if(canSaveText){
+      if(memoVal !== undefined) data['memo'] = memoVal;
+      if(memo2Val !== undefined) data['memo2'] = memo2Val;
+      if(routeVal !== undefined) data['route'] = routeVal;
+      if(carVal !== undefined) data['car'] = carVal;
+      if(kmStartVal !== undefined) data['kmStart'] = kmStartVal;
+      if(kmEndVal !== undefined) data['kmEnd'] = kmEndVal;
+      if(truckVal !== undefined) data['truck'] = truckVal;
+    }
     var json = JSON.stringify(data);
     // IndexedDB（永続）
     idbSet('report-inputs', json);
@@ -2352,6 +2441,15 @@ async function saveReportInputs(){
 }
 
 async function loadReportInputs(){
+  try{ await loadReportInputsCore(); }
+  finally{
+    // 復元が終わった（または保存内容が無かった）ので、以後は通常通り保存してよい
+    textInputsLoaded = true;
+    salesRestored = true;
+  }
+}
+
+async function loadReportInputsCore(){
   var data = null;
   // IndexedDBから読み込む（優先）
   try{
@@ -2366,10 +2464,32 @@ async function loadReportInputs(){
     }catch(e){}
   }
   if(!data) return;
+  // 日付が変わっていたら、日替わりで消す項目は戻さず、保存内容からも消す
+  if(data.reportDate && data.reportDate !== reportDayStamp){
+    purgeDailyData(data);
+    data.reportDate = reportDayStamp;
+    var purged = JSON.stringify(data);
+    try{ idbSet('report-inputs', purged); }catch(e){}
+    try{ window.storage.set('report-inputs', purged, false); }catch(e){}
+  }
   var inputs = document.querySelectorAll('.sales-input');
-  inputs.forEach(function(el, i){
-    if(data['sales_'+i] !== undefined) el.value = data['sales_'+i];
-  });
+  if(data.salesByKey){
+    inputs.forEach(function(el){
+      var v = data.salesByKey[el.dataset.rid];
+      if(v !== undefined) el.value = v;
+    });
+  } else {
+    // 旧形式（行番号で保存されていたデータ）の引き継ぎ。次の保存から新形式になる
+    inputs.forEach(function(el, i){
+      if(data['sales_'+i] !== undefined) el.value = data['sales_'+i];
+    });
+  }
+  if(data.memoByKey){
+    document.querySelectorAll('[data-mrid]').forEach(function(el){
+      var v = data.memoByKey[el.getAttribute('data-mrid')];
+      if(v !== undefined) el.value = v;
+    });
+  }
   var memo = document.getElementById('report-memo');
   if(memo && data['memo']) memo.value = data['memo'];
   var memo2 = document.getElementById('report-memo2');
@@ -2443,6 +2563,9 @@ renderWaypoints();
 // データ読み込みは非同期で後から
 (async function(){
   try{ await loadState(); }catch(e){}
+  // 起動直後に、保存済みのルート名・車・走行距離を先に画面へ戻す（報告書タブを開く前でも消えないように）
+  try{ lastAutoRouteValue = activeSlots.map(function(i){ return slots[i].label; }).join('・'); }catch(e){}
+  try{ await loadReportInputs(); }catch(e){}
   try{ await loadMonthlyData(); }catch(e){}
   renderSlots();
   renderPicker();
